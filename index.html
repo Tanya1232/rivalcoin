@@ -319,7 +319,6 @@
                         <div class="card-sub">Зарабатывай $RIVAL в беге!</div>
                     </div>
                 </div>
-                <!-- Вставь сюда ссылку на свой раннер -->
                 <button class="action-btn" onclick="launchGame('https://tanya1232.github.io/subway-runner-3d/')">ИГРАТЬ</button>
             </div>
 
@@ -366,20 +365,9 @@
     <!-- Вкладка 4: Кошелек -->
     <div class="tab-content" id="tab-wallet">
         <div class="card-list">
-            <div class="card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
-                <div style="font-size: 14px; color: var(--text-sub);">Адрес $RIVAL Кошелька</div>
-                <div style="font-size: 13px; font-weight: 600; word-break: break-all; color: #60a5fa;" id="wallet-addr">
-                    0xRIVAL...777
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-left">
-                    <div class="card-icon">📊</div>
-                    <div>
-                        <div class="card-title">Всего эмиссия</div>
-                        <div class="card-sub">1 000 000 000 000 $RIVAL</div>
-                    </div>
+            <div class="card" style="justify-content: center; text-align: center; padding: 30px 15px;">
+                <div style="color: var(--text-sub); font-size: 15px; line-height: 1.5;">
+                    👛 Кошелек пока пуст.<br>Интеграция Web3 появится позже!
                 </div>
             </div>
         </div>
@@ -517,9 +505,6 @@
             document.getElementById(`tab-${tabName}`).classList.add('active');
             el.classList.add('active');
         }
-
-        // Генерируем уникальный кошелек для вида
-        document.getElementById('wallet-addr').innerText = '0xRIVAL' + Math.random().toString(36).substring(2, 10).toUpperCase() + '777';
 
         updateUI();
     </script>
