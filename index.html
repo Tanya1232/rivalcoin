@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Rival Ecosystem & Hub</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-gold: #f59e0b;
+            --accent-glow: #fbbf24;
+            --text-main: #ffffff;
+            --text-sub: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 70%);
+        }
+
+        /* Шапка баланса */
+        .header {
+            padding: 20px 15px 10px;
+            text-align: center;
+        }
+
+        .brand-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .balance-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .coin-icon-small {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 20px;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+            border: 2px solid #fef08a;
+        }
+
+        .balance-value {
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        /* Контентные вкладки */
+        .tab-content {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Вкладка Тапалка */
+        .tapper-area {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .big-coin-btn {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fbbf24 0%, #d97706 70%, #78350f 100%);
+            border: 8px solid #fef08a;
+            box-shadow: 0 0 50px rgba(245, 158, 11, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.05s ease;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .big-coin-btn:active {
+            transform: scale(0.94);
+        }
+
+        .big-coin-symbol {
+            font-size: 90px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        /* Энергия */
+        .energy-box {
+            width: 80%;
+            max-width: 300px;
+            margin-top: 15px;
+        }
+
+        .energy-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .energy-bar-bg {
+            width: 100%;
+            height: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .energy-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #f59e0b, #3b82f6);
+            border-radius: 10px;
+            transition: width 0.2s ease;
+        }
+
+        /* Анимация клика (+1) */
+        .tap-pop {
+            position: absolute;
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 900;
+            pointer-events: none;
+            animation: popUp 0.8s ease-out forwards;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+            z-index: 100;
+        }
+
+        @keyframes popUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-100px) scale(1.3); }
+        }
+
+        /* Карточки Игр / Прокачки / Кошелька */
+        .card-list {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .card-icon {
+            font-size: 32px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .card-sub {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 3px;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Навигационное меню (Footer) */
+        .nav-bar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 5px 20px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-sub);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 22%;
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--accent-gold);
+        }
+
+        .nav-icon {
+            font-size: 22px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Шапка -->
+    <div class="header">
+        <div class="brand-title">RIVAL ECOSYSTEM</div>
+        <div class="balance-container">
+            <div class="coin-icon-small">R</div>
+            <div class="balance-value" id="balance">0</div>
+        </div>
+    </div>
+
+    <!-- Вкладка 1: Тапалка -->
+    <div class="tab-content active" id="tab-tapper">
+        <div class="tapper-area">
+            <div class="big-coin-btn" id="coin-btn">
+                <span class="big-coin-symbol">R</span>
+            </div>
+
+            <div class="energy-box">
+                <div class="energy-info">
+                    <span>⚡ Энергия</span>
+                    <span id="energy-text">1000 / 1000</span>
+                </div>
+                <div class="energy-bar-bg">
+                    <div class="energy-bar-fill" id="energy-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка 2: Игры (Ecosystem Hub) -->
+    <div class="tab-content" id="tab-games">
+        <div class="card-list">
+            <div class="card">
+                <div class="card-left">
+                    <div class="card-icon">🏃</div>
+                    <div>
+                        <div class="card-title">Subway Runner 3D</div>
+                        <div class="card-sub">Зарабатывай $RIVAL в беге!</div>
+                    </div>
+                </div>
+                <!-- Вставь сюда ссылку на свой раннер -->
+                <button class="action-btn" onclick="launchGame('https://tanya1232.github.io/subway-runner-3d/')">ИГРАТЬ</button>
+            </div>
+
+            <div class="card" style="opacity: 0.6;">
+                <div class="card-left">
+                    <div class="card-icon">🚗</div>
+                    <div>
+                        <div class="card-title">Rival Racing 3D</div>
+                        <div class="card-sub">Скоро в экосистеме...</div>
+                    </div>
+                </div>
+                <button class="action-btn" style="background: #475569;" disabled>LOCK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка 3: Прокачка -->
+    <div class="tab-content" id="tab-boosts">
+        <div class="card-list">
+            <div class="card">
+                <div class="card-left">
+                    <div class="card-icon">👆</div>
+                    <div>
+                        <div class="card-title">Мульти-Тап</div>
+                        <div class="card-sub" id="multitap-sub">+1 за тап | Цена: 100</div>
+                    </div>
+                </div>
+                <button class="action-btn" onclick="buyUpgrade('multitap')">БУСТ</button>
+            </div>
+
+            <div class="card">
+                <div class="card-left">
+                    <div class="card-icon">🔋</div>
+                    <div>
+                        <div class="card-title">Макс. Энергия</div>
+                        <div class="card-sub" id="energy-sub">+500 к запасу | Цена: 200</div>
+                    </div>
+                </div>
+                <button class="action-btn" onclick="buyUpgrade('energy')">БУСТ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка 4: Кошелек -->
+    <div class="tab-content" id="tab-wallet">
+        <div class="card-list">
+            <div class="card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                <div style="font-size: 14px; color: var(--text-sub);">Адрес $RIVAL Кошелька</div>
+                <div style="font-size: 13px; font-weight: 600; word-break: break-all; color: #60a5fa;" id="wallet-addr">
+                    0xRIVAL...777
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-left">
+                    <div class="card-icon">📊</div>
+                    <div>
+                        <div class="card-title">Всего эмиссия</div>
+                        <div class="card-sub">1 000 000 000 000 $RIVAL</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Нижнее меню -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('tapper', this)">
+            <div class="nav-icon">🪙</div>
+            <span>Тапалка</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('games', this)">
+            <div class="nav-icon">🎮</div>
+            <span>Игры</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('boosts', this)">
+            <div class="nav-icon">⚡</div>
+            <span>Прокачка</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('wallet', this)">
+            <div class="nav-icon">👛</div>
+            <span>Кошелек</span>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram ? window.Telegram.WebApp : null;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        // Состояние пользователя
+        let state = {
+            balance: parseInt(localStorage.getItem('rival_balance')) || 0,
+            energy: parseInt(localStorage.getItem('rival_energy')) || 1000,
+            maxEnergy: parseInt(localStorage.getItem('rival_max_energy')) || 1000,
+            tapValue: parseInt(localStorage.getItem('rival_tap_val')) || 1,
+            multitapCost: parseInt(localStorage.getItem('rival_mt_cost')) || 100,
+            energyCost: parseInt(localStorage.getItem('rival_eg_cost')) || 200,
+        };
+
+        // Обновление UI
+        function updateUI() {
+            document.getElementById('balance').innerText = state.balance.toLocaleString();
+            document.getElementById('energy-text').innerText = `${state.energy} / ${state.maxEnergy}`;
+            
+            const fillPercent = (state.energy / state.maxEnergy) * 100;
+            document.getElementById('energy-fill').style.width = `${fillPercent}%`;
+
+            document.getElementById('multitap-sub').innerText = `+${state.tapValue + 1} за тап | Цена: ${state.multitapCost}`;
+            document.getElementById('energy-sub').innerText = `+500 к базе | Цена: ${state.energyCost}`;
+
+            // Сохраняем в localStorage
+            localStorage.setItem('rival_balance', state.balance);
+            localStorage.setItem('rival_energy', state.energy);
+            localStorage.setItem('rival_max_energy', state.maxEnergy);
+            localStorage.setItem('rival_tap_val', state.tapValue);
+            localStorage.setItem('rival_mt_cost', state.multitapCost);
+            localStorage.setItem('rival_eg_cost', state.energyCost);
+        }
+
+        // Обработка Тапа
+        const coinBtn = document.getElementById('coin-btn');
+
+        function handleTap(e) {
+            e.preventDefault();
+
+            if (state.energy < state.tapValue) return;
+
+            // Списываем энергию и добавляем баланс
+            state.energy -= state.tapValue;
+            state.balance += state.tapValue;
+
+            // Виброотклик Telegram
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+
+            // Вылетающий текст +X
+            const rect = coinBtn.getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+            const pop = document.createElement('div');
+            pop.className = 'tap-pop';
+            pop.innerText = `+${state.tapValue}`;
+            pop.style.left = `${x}px`;
+            pop.style.top = `${y}px`;
+            coinBtn.appendChild(pop);
+
+            setTimeout(() => pop.remove(), 800);
+
+            updateUI();
+        }
+
+        coinBtn.addEventListener('touchstart', handleTap);
+        coinBtn.addEventListener('click', handleTap);
+
+        // Регенерация энергии (3 ед/сек)
+        setInterval(() => {
+            if (state.energy < state.maxEnergy) {
+                state.energy = Math.min(state.maxEnergy, state.energy + 3);
+                updateUI();
+            }
+        }, 1000);
+
+        // Покупка апгрейдов
+        function buyUpgrade(type) {
+            if (type === 'multitap' && state.balance >= state.multitapCost) {
+                state.balance -= state.multitapCost;
+                state.tapValue += 1;
+                state.multitapCost *= 2;
+            } else if (type === 'energy' && state.balance >= state.energyCost) {
+                state.balance -= state.energyCost;
+                state.maxEnergy += 500;
+                state.energy += 500;
+                state.energyCost *= 2;
+            }
+            updateUI();
+        }
+
+        // Запуск сторонних игр
+        function launchGame(url) {
+            if (tg) tg.openLink(url);
+            else window.location.href = url;
+        }
+
+        // Переключение вкладок
+        function switchTab(tabName, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            el.classList.add('active');
+        }
+
+        // Генерируем уникальный кошелек для вида
+        document.getElementById('wallet-addr').innerText = '0xRIVAL' + Math.random().toString(36).substring(2, 10).toUpperCase() + '777';
+
+        updateUI();
+    </script>
+</body>
+</html>
