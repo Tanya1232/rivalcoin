@@ -556,11 +556,15 @@
             updateUI();
         };
 
-        // Запуск сторонних игр
+        // Запуск сторонних игр с передачей userId
         window.launchGame = function(url) {
-            if (tg) tg.openLink(url);
-            else window.location.href = url;
+            const gameUrl = `${url}?uid=${userId}`;
+            if (tg && tg.openLink) tg.openLink(gameUrl);
+            else window.location.href = gameUrl;
         };
+
+        // Авто-обновление баланса при возвращении игрока в тапалку из игры
+        window.addEventListener('focus', loadUserData);
 
         // Переключение вкладок
         window.switchTab = function(tabName, el) {
