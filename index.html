@@ -437,7 +437,7 @@
     <div class="nav-bar">
         <div class="nav-item active" onclick="switchTab('tapper', this)">
             <div class="nav-icon">🪙</div>
-            <span>Тапалка</span>
+            <span>RIVALCOIN</span>
         </div>
         <div class="nav-item" onclick="switchTab('games', this)">
             <div class="nav-icon">🎮</div>
@@ -679,8 +679,7 @@
             const game = new URL(url);
             game.searchParams.set('uid', userId);
             game.searchParams.set('returnUrl', window.location.href);
-            if (tg && typeof tg.openLink === 'function') tg.openLink(game.href);
-            else window.location.href = game.href;
+            window.location.href = game.href;
         };
 
         // При возвращении в тапалку — подтягиваем актуальный баланс из базы (включая монеты из ранера)
