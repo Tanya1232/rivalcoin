@@ -308,7 +308,7 @@
         </div>
     </div>
 
-    <!-- Вкладка 2: Игры (Ecosystem Hub) -->
+    <!-- Вкладка 2: Игры -->
     <div class="tab-content" id="tab-games">
         <div class="card-list">
             <div class="card">
@@ -393,12 +393,11 @@
         </div>
     </div>
 
-    <!-- Интеграция Firebase и логика приложения -->
+    <!-- Логика Firebase и Тапалки -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        // Твоя конфигурация из консоли Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDfnuR07pt2IIWCScmI7H4aSy57XIHZpHg",
             authDomain: "rivalcoin-738cc.firebaseapp.com",
@@ -408,28 +407,34 @@
             appId: "1:53292984166:web:63d508b16bb8c04affcaa7"
         };
 
-        // Инициализация Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Инициализация Telegram WebApp
         const tg = window.Telegram ? window.Telegram.WebApp : null;
         if (tg) {
             tg.ready();
             tg.expand();
         }
 
-        // Определение ID пользователя (Из Telegram или тестовый для браузера)
-        let userId = tg?.initDataUnsafe?.user?.id;
-        if (!userId) {
-            userId = localStorage.getItem('rival_demo_uid') || 'demo_' + Math.floor(Math.random() * 1000000);
-            localStorage.setItem('rival_demo_uid', userId);
+        // Надежный ID пользователя (единый стандарт с ранером)
+        const urlParams = new URLSearchParams(window.location.search);
+        let userId = urlParams.get('uid') || urlParams.get('userId');
+
+        if (!userId && tg?.initDataUnsafe?.user?.id) {
+            userId = String(tg.initDataUnsafe.user.id);
         }
+        if (!userId) {
+            userId = localStorage.getItem('rival_uid');
+        }
+        if (!userId) {
+            userId = 'user_' + Math.floor(Math.random() * 900000 + 100000);
+        }
+        localStorage.setItem('rival_uid', userId);
+        userId = String(userId);
 
-        const userDocRef = doc(db, "users", String(userId));
-        let isDirty = false; // Флаг для синхронизации изменений с базой
+        const userDocRef = doc(db, "users", userId);
+        let accumulatedTaps = 0; // Накопленные клики для отправки пачкой через increment
 
-        // Начальное состояние пользователя
         let state = {
             balance: 0,
             energy: 1000,
@@ -440,7 +445,7 @@
             username: tg?.initDataUnsafe?.user?.username || 'Player'
         };
 
-        // Загрузка данных из Firebase Firestore
+        // Загрузка данных из Firebase
         async function loadUserData() {
             try {
                 const docSnap = await getDoc(userDocRef);
@@ -448,47 +453,51 @@
                     const cloudData = docSnap.data();
                     state = { ...state, ...cloudData };
                 } else {
-                    // Создание записи для нового игрока
                     await setDoc(userDocRef, state);
                 }
             } catch (error) {
-                console.error("Ошибка загрузки данных из Firestore:", error);
+                console.error("Ошибка загрузки данных:", error);
             }
             updateUI();
         }
 
-        // Сохранение данных в Cloud Firestore
+        // Атомарное сохранение энергии и параметров (без затирки баланса ранера)
         async function saveUserData() {
             try {
-                await setDoc(userDocRef, state, { merge: true });
+                await setDoc(userDocRef, {
+                    energy: state.energy,
+                    maxEnergy: state.maxEnergy,
+                    tapValue: state.tapValue,
+                    multitapCost: state.multitapCost,
+                    energyCost: state.energyCost,
+                    username: state.username
+                }, { merge: true });
             } catch (error) {
-                console.error("Ошибка сохранения в Firestore:", error);
+                console.error("Ошибка сохранения:", error);
             }
         }
 
-        // Обновление элементов UI
         function updateUI() {
-            document.getElementById('balance').innerText = state.balance.toLocaleString();
+            document.getElementById('balance').innerText = Number(state.balance || 0).toLocaleString();
             document.getElementById('energy-text').innerText = `${state.energy} / ${state.maxEnergy}`;
             
             const fillPercent = Math.max(0, Math.min(100, (state.energy / state.maxEnergy) * 100));
             document.getElementById('energy-fill').style.width = `${fillPercent}%`;
 
-            document.getElementById('multitap-sub').innerText = `+${state.tapValue + 1} за тап | Цена: ${state.multitapCost}`;
+            document.getElementById('multitap-sub').innerText = `+${state.tapValue} за тап | Цена: ${state.multitapCost}`;
             document.getElementById('energy-sub').innerText = `+500 к базе | Цена: ${state.energyCost}`;
         }
 
-        // Обработка Тапа
+        // Обработка Тапа с атомарным increment для баланса
         const coinBtn = document.getElementById('coin-btn');
 
-        function handleTap(e) {
+        async function handleTap(e) {
             if (e.type === 'touchstart') e.preventDefault();
-
             if (state.energy < state.tapValue) return;
 
             state.energy -= state.tapValue;
             state.balance += state.tapValue;
-            isDirty = true; // Отмечаем, что есть несинхронизированные данные
+            accumulatedTaps += state.tapValue;
 
             if (tg && tg.HapticFeedback) {
                 tg.HapticFeedback.impactOccurred('medium');
@@ -515,55 +524,73 @@
             coinBtn.appendChild(pop);
 
             setTimeout(() => pop.remove(), 800);
-
             updateUI();
         }
 
-        coinBtn.addEventListener('touchstart', handleTap, { passive: false });
+        coinBtn.addEventListener('touchstart', handleTap, { passive: true });
         coinBtn.addEventListener('click', handleTap);
 
-        // Регенерация энергии (3 ед/сек)
+        // Регенерация энергии
         setInterval(() => {
             if (state.energy < state.maxEnergy) {
                 state.energy = Math.min(state.maxEnergy, state.energy + 3);
-                isDirty = true;
                 updateUI();
             }
         }, 1000);
 
-        // Авто-сохранение в облако каждые 3 секунды при наличии изменений
-        setInterval(() => {
-            if (isDirty) {
+        // Синхронизация накопленных тапов и энергии в Firestore каждые 3 секунды через атомарный increment
+        setInterval(async () => {
+            if (accumulatedTaps > 0) {
+                const tapsToSend = accumulatedTaps;
+                accumulatedTaps = 0;
+                try {
+                    await setDoc(userDocRef, {
+                        balance: increment(tapsToSend),
+                        energy: state.energy
+                    }, { merge: true });
+                } catch (err) {
+                    console.error("Ошибка отправки тапов:", err);
+                    accumulatedTaps += tapsToSend; // возвращаем обратно при сбое сети
+                }
+            } else {
                 saveUserData();
-                isDirty = false;
             }
         }, 3000);
 
-        // Функция покупки апгрейдов
-        window.buyUpgrade = function(type) {
+        // Покупка апгрейдов
+        window.buyUpgrade = async function(type) {
             if (type === 'multitap' && state.balance >= state.multitapCost) {
                 state.balance -= state.multitapCost;
                 state.tapValue += 1;
                 state.multitapCost *= 2;
-                saveUserData();
+                await setDoc(userDocRef, {
+                    balance: state.balance,
+                    tapValue: state.tapValue,
+                    multitapCost: state.multitapCost
+                }, { merge: true });
             } else if (type === 'energy' && state.balance >= state.energyCost) {
                 state.balance -= state.energyCost;
                 state.maxEnergy += 500;
                 state.energy += 500;
                 state.energyCost *= 2;
-                saveUserData();
+                await setDoc(userDocRef, {
+                    balance: state.balance,
+                    maxEnergy: state.maxEnergy,
+                    energy: state.energy,
+                    energyCost: state.energyCost
+                }, { merge: true });
             }
             updateUI();
         };
 
-        // Запуск сторонних игр с передачей userId
+        // Запуск игры с передачей правильного uid
         window.launchGame = function(url) {
             const gameUrl = `${url}?uid=${userId}`;
             if (tg && tg.openLink) tg.openLink(gameUrl);
             else window.location.href = gameUrl;
         };
 
-        // Авто-обновление баланса при возвращении игрока в тапалку из игры
+        // При возвращении в тапалку — подтягиваем актуальный баланс из базы (включая монеты из ранера)
         window.addEventListener('focus', loadUserData);
 
         // Переключение вкладок
@@ -575,7 +602,7 @@
             el.classList.add('active');
         };
 
-        // Запуск приложения и загрузка прогресса из Firestore
+        // Старт
         loadUserData();
     </script>
 </body>
