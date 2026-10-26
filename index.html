@@ -6,6 +6,8 @@
     <title>Rival Ecosystem & Hub</title>
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Monetag SDK: тот же рекламный блок, что используется в Subway Runner -->
+    <script src="//libtl.com/sdk.js" data-zone="11997011" data-sdk="show_11997011"></script>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -253,7 +255,7 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-around;
-            padding: 12px 5px 20px;
+            padding: 10px 2px 16px;
         }
 
         .nav-item {
@@ -262,10 +264,10 @@
             align-items: center;
             gap: 4px;
             color: var(--text-sub);
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             cursor: pointer;
-            width: 22%;
+            width: 16.2%;
             transition: color 0.2s;
         }
 
@@ -373,7 +375,56 @@
         </div>
     </div>
 
-    <!-- Вкладка 4: Кошелек -->
+    <!-- Вкладка 4: Рефералы и задания -->
+    <div class="tab-content" id="tab-referrals">
+        <div class="card-list">
+            <div class="card">
+                <div class="card-left">
+                    <div class="card-icon">👥</div>
+                    <div>
+                        <div class="card-title">Пригласи друга</div>
+                        <div class="card-sub">+10 000 RIVAL за нового игрока</div>
+                    </div>
+                </div>
+                <button class="action-btn" onclick="copyReferralLink()">ПРИГЛАСИТЬ</button>
+            </div>
+            <div class="card">
+                <div class="card-left">
+                    <div class="card-icon">📣</div>
+                    <div>
+                        <div class="card-title">Вступить в группу</div>
+                        <div class="card-sub">+5 000 RIVAL один раз</div>
+                    </div>
+                </div>
+                <button class="action-btn" onclick="joinGroup()">ОТКРЫТЬ</button>
+            </div>
+            <div class="card" style="display:block;">
+                <div class="card-title">Твоя реферальная ссылка</div>
+                <div class="card-sub" id="referral-link-text" style="overflow-wrap:anywhere; margin:8px 0;">Загружаем ссылку...</div>
+                <div class="card-sub" id="referral-status">Награда за друга начисляется один раз за нового игрока.</div>
+            </div>
+            <div class="card" style="display:block;">
+                <div class="card-title">Важно</div>
+                <div class="card-sub">Пока это простая версия: вступление в Telegram-группу не проверяется автоматически. Для честной проверки понадобится бот или сервер.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка 5: Пассивный доход -->
+    <div class="tab-content" id="tab-passive">
+        <div class="card-list">
+            <div class="card" style="display:block;">
+                <div class="card-title">⛏️ Пассивная добыча</div>
+                <div class="card-sub" style="margin-top:6px;">Каждый активный слот приносит 100 RIVAL в час. Максимум — 10 слотов (1 000 RIVAL/час).</div>
+                <div class="card-sub" id="passive-slots-status" style="margin-top:10px;">Активно слотов: 0/10</div>
+                <div class="card-sub" id="passive-pending-status" style="margin-top:4px;">Накоплено: 0 RIVAL</div>
+                <button class="action-btn" id="activate-passive-btn" style="width:100%; margin-top:12px;" onclick="activatePassiveSlot()">АКТИВИРОВАТЬ СЛОТ</button>
+                <div class="card-sub" style="margin-top:8px;">Для активации каждого слота нужно успешно пройти рекламный просмотр Monetag.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка 6: Кошелек -->
     <div class="tab-content" id="tab-wallet">
         <div class="card-list">
             <div class="card" style="justify-content: center; text-align: center; padding: 30px 15px;">
@@ -398,6 +449,14 @@
             <div class="nav-icon">⚡</div>
             <span>Прокачка</span>
         </div>
+        <div class="nav-item" onclick="switchTab('referrals', this)">
+            <div class="nav-icon">👥</div>
+            <span>Задания</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('passive', this)">
+            <div class="nav-icon">⛏️</div>
+            <span>Доход</span>
+        </div>
         <div class="nav-item" onclick="switchTab('wallet', this)">
             <div class="nav-icon">👛</div>
             <span>Кошелек</span>
@@ -407,7 +466,7 @@
     <!-- Интеграция Firebase и логика приложения -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         // Твоя конфигурация из консоли Firebase
         const firebaseConfig = {
@@ -448,25 +507,167 @@
             tapValue: 1,
             multitapCost: 100,
             energyCost: 200,
-            username: tg?.initDataUnsafe?.user?.username || 'Player'
+            username: tg?.initDataUnsafe?.user?.username || 'Player',
+            lastEnergyUpdate: Date.now(),
+            passiveSlots: 0,
+            lastPassiveUpdate: Date.now(),
+            groupRewardClaimed: false
         };
 
-        // Загрузка данных из Firebase Firestore
+        // Загрузка данных, офлайн-восстановление энергии и пассивного дохода
+        let isLoadingUser = false;
         async function loadUserData() {
+            if (isLoadingUser) return;
+            isLoadingUser = true;
             try {
                 const docSnap = await getDoc(userDocRef);
                 if (docSnap.exists()) {
                     const cloudData = docSnap.data();
                     state = { ...state, ...cloudData };
                 } else {
-                    // Создание записи для нового игрока
+                    state.lastEnergyUpdate = Date.now();
+                    state.lastPassiveUpdate = Date.now();
                     await setDoc(userDocRef, state);
+                    await processReferral();
                 }
+
+                const now = Date.now();
+                const energyTime = Number(state.lastEnergyUpdate) || now;
+                const elapsedSeconds = Math.max(0, Math.floor((now - energyTime) / 1000));
+                state.energy = Math.min(Number(state.maxEnergy) || 1000, (Number(state.energy) || 0) + elapsedSeconds * 3);
+                state.lastEnergyUpdate = now;
+
+                // Пассивный доход: начисляем за прошедшее время, даже если приложение закрыто.
+                const slots = Math.max(0, Math.min(10, Number(state.passiveSlots) || 0));
+                const passiveTime = Number(state.lastPassiveUpdate) || now;
+                const wholeHours = Math.max(0, Math.floor((now - passiveTime) / 3600000));
+                state.balance = (Number(state.balance) || 0) + wholeHours * slots * 100;
+                // Сохраняем остаток времени, чтобы короткие заходы не обнуляли прогресс часа.
+                state.lastPassiveUpdate = passiveTime + wholeHours * 3600000;
+                await saveUserData();
+                updateUI();
+                updateReferralUI();
+                updatePassiveUI();
             } catch (error) {
                 console.error("Ошибка загрузки данных из Firestore:", error);
+                document.getElementById('referral-status').innerText = 'Не удалось загрузить данные. Проверь подключение к интернету.';
+            } finally {
+                isLoadingUser = false;
             }
-            updateUI();
         }
+
+        // Начисляем пригласившему 10 000 только один раз за нового пользователя.
+        async function processReferral() {
+            const params = new URLSearchParams(window.location.search);
+            const referrerId = params.get('ref') || tg?.initDataUnsafe?.start_param || '';
+            if (!referrerId || String(referrerId) === String(userId)) return;
+            const referrerRef = doc(db, 'users', String(referrerId));
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const newUserSnap = await transaction.get(userDocRef);
+                    if (!newUserSnap.exists()) return;
+                    const newUserData = newUserSnap.data();
+                    if (newUserData.referredBy || newUserData.referralProcessed) return;
+                    const refSnap = await transaction.get(referrerRef);
+                    if (!refSnap.exists()) return;
+                    const refData = refSnap.data();
+                    transaction.update(referrerRef, { balance: (Number(refData.balance) || 0) + 10000 });
+                    transaction.update(userDocRef, { referredBy: String(referrerId), referralProcessed: true });
+                });
+            } catch (err) {
+                console.error('Ошибка обработки реферала:', err);
+            }
+        }
+
+        function updateReferralUI() {
+            const link = new URL(window.location.href);
+            link.search = '';
+            link.hash = '';
+            link.searchParams.set('ref', String(userId));
+            const text = document.getElementById('referral-link-text');
+            if (text) text.textContent = link.href;
+            const status = document.getElementById('referral-status');
+            if (status) status.textContent = state.referredBy ? 'Ты пришёл по реферальной ссылке. Спасибо!' : 'Награда за нового друга: 10 000 RIVAL один раз за аккаунт.';
+        }
+
+        window.copyReferralLink = async function() {
+            const link = new URL(window.location.href);
+            link.search = '';
+            link.hash = '';
+            link.searchParams.set('ref', String(userId));
+            try {
+                await navigator.clipboard.writeText(link.href);
+                document.getElementById('referral-status').textContent = 'Ссылка скопирована! Отправь её другу.';
+            } catch (err) {
+                document.getElementById('referral-status').textContent = 'Скопируй ссылку вручную из поля выше.';
+            }
+        };
+
+        window.joinGroup = function() {
+            window.open('https://t.me/ProRivalArena', '_blank', 'noopener');
+            if (state.groupRewardClaimed) {
+                document.getElementById('referral-status').textContent = 'Награда за группу уже получена.';
+                return;
+            }
+            const ok = confirm('Ты вступил(а) в группу ProRivalArena? В простой версии вступление не проверяется автоматически. Начислить 5 000 RIVAL?');
+            if (!ok) return;
+            state.balance = (Number(state.balance) || 0) + 5000;
+            state.groupRewardClaimed = true;
+            saveUserData().then(() => {
+                updateUI();
+                document.getElementById('referral-status').textContent = 'Начислено 5 000 RIVAL за вступление в группу.';
+            });
+        };
+
+        function updatePassiveUI() {
+            const slots = Math.max(0, Math.min(10, Number(state.passiveSlots) || 0));
+            const slotEl = document.getElementById('passive-slots-status');
+            const pendingEl = document.getElementById('passive-pending-status');
+            const btn = document.getElementById('activate-passive-btn');
+            if (slotEl) slotEl.textContent = `Активно слотов: ${slots}/10 · ${slots * 100} RIVAL/час`;
+            if (pendingEl) pendingEl.textContent = `Доход начисляется автоматически при открытии приложения.`;
+            if (btn) {
+                btn.disabled = slots >= 10;
+                btn.textContent = slots >= 10 ? 'МАКСИМУМ 10 СЛОТОВ' : 'АКТИВИРОВАТЬ СЛОТ';
+                btn.style.opacity = slots >= 10 ? '0.6' : '1';
+            }
+        }
+
+        window.activatePassiveSlot = async function() {
+            const slots = Math.max(0, Math.min(10, Number(state.passiveSlots) || 0));
+            if (slots >= 10) {
+                updatePassiveUI();
+                return;
+            }
+            if (window._rivalMonetagBusy) return;
+            if (typeof window.show_11997011 !== 'function') {
+                alert('Monetag пока не загрузился. Проверь интернет и попробуй ещё раз.');
+                return;
+            }
+
+            window._rivalMonetagBusy = true;
+            const btn = document.getElementById('activate-passive-btn');
+            if (btn) { btn.disabled = true; btn.textContent = 'ЗАГРУЗКА РЕКЛАМЫ…'; }
+            try {
+                // Слот выдаётся только после успешного завершения вызова Monetag.
+                await window.show_11997011();
+                const latestSlots = Math.max(0, Math.min(10, Number(state.passiveSlots) || 0));
+                if (latestSlots < 10) {
+                    state.passiveSlots = latestSlots + 1;
+                    // Сохраняем накопленное время, не сбрасывая прогресс уже активных слотов.
+                    await saveUserData();
+                    updatePassiveUI();
+                    document.getElementById('referral-status')?.textContent;
+                    alert('Слот активирован! Он приносит 100 RIVAL в час.');
+                }
+            } catch (error) {
+                console.warn('Monetag ad did not complete:', error);
+                alert('Реклама не была завершена или сейчас недоступна. Слот не активирован.');
+            } finally {
+                window._rivalMonetagBusy = false;
+                updatePassiveUI();
+            }
+        };
 
         // Сохранение данных в Cloud Firestore
         async function saveUserData() {
@@ -484,6 +685,7 @@
             
             const fillPercent = Math.max(0, Math.min(100, (state.energy / state.maxEnergy) * 100));
             document.getElementById('energy-fill').style.width = `${fillPercent}%`;
+            if (document.getElementById('passive-slots-status')) updatePassiveUI();
 
             document.getElementById('multitap-sub').innerText = `+${state.tapValue + 1} за тап | Цена: ${state.multitapCost}`;
             document.getElementById('energy-sub').innerText = `+500 к базе | Цена: ${state.energyCost}`;
@@ -535,6 +737,7 @@
 
         // Регенерация энергии (3 ед/сек)
         setInterval(() => {
+            state.lastEnergyUpdate = Date.now();
             if (state.energy < state.maxEnergy) {
                 state.energy = Math.min(state.maxEnergy, state.energy + 3);
                 isDirty = true;
