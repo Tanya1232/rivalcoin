@@ -22,7 +22,25 @@
             padding: 0;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            tap-highlight-color: transparent;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Убираем временный прямоугольный подсвет при касании на телефонах */
+        button, a, [onclick], .big-coin-btn, .nav-item, .action-btn {
+            -webkit-tap-highlight-color: transparent;
+            tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        button:focus, button:focus-visible,
+        a:focus, a:focus-visible,
+        [onclick]:focus, [onclick]:focus-visible,
+        .big-coin-btn:focus, .big-coin-btn:focus-visible,
+        .nav-item:focus, .nav-item:focus-visible,
+        .action-btn:focus, .action-btn:focus-visible {
+            outline: none;
         }
 
         body {
@@ -105,6 +123,13 @@
         }
 
         .big-coin-btn {
+            -webkit-appearance: none;
+            appearance: none;
+            -webkit-tap-highlight-color: transparent !important;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+            outline: none !important;
+            border-radius: 50%;
             width: 250px;
             height: 250px;
             border-radius: 50%;
@@ -326,6 +351,12 @@
             text-shadow: 0 3px 0 #b45309, 0 6px 12px rgba(69,26,3,.55), 0 0 18px rgba(255,255,255,.55);
             box-shadow: inset 0 3px 8px rgba(255,255,255,.3), 0 4px 12px rgba(120,53,15,.25);
         }
+        .big-coin-btn:active,
+        .big-coin-btn:focus,
+        .big-coin-btn:focus-visible {
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
         .big-coin-btn:active {
             transform: scale(.92) rotate(-1deg);
             box-shadow: 0 0 0 5px rgba(245,158,11,.12), 0 0 24px rgba(251,191,36,.38),
@@ -395,7 +426,7 @@
         </div>
     </div>
 
-    <!-- Вкладка 3: Прокачка -->
+    <!-- Вкладка 3: Буст -->
     <div class="tab-content" id="tab-boosts">
         <div class="card-list">
             <div class="card">
@@ -445,7 +476,7 @@
         </div>
         <div class="nav-item" onclick="switchTab('boosts', this)">
             <div class="nav-icon">⚡</div>
-            <span>Прокачка</span>
+            <span>Буст</span>
         </div>
         <div class="nav-item" onclick="switchTab('wallet', this)">
             <div class="nav-icon">👛</div>
@@ -456,7 +487,7 @@
     <!-- Логика Firebase и Тапалки -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, increment, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, increment, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDfnuR07pt2IIWCScmI7H4aSy57XIHZpHg",
@@ -557,6 +588,18 @@
             document.getElementById('energy-sub').innerText = `+500 к базе | Цена: ${state.energyCost}`;
         }
 
+        // Держим баланс и параметры улучшений синхронизированными с Firebase без устаревшего отображения.
+        onSnapshot(userDocRef, (snap) => {
+            if (!snap.exists()) return;
+            const cloudData = snap.data();
+            state.balance = Number(cloudData.balance || 0) + accumulatedTaps;
+            if (cloudData.tapValue !== undefined) state.tapValue = Number(cloudData.tapValue);
+            if (cloudData.multitapCost !== undefined) state.multitapCost = Number(cloudData.multitapCost);
+            if (cloudData.maxEnergy !== undefined) state.maxEnergy = Number(cloudData.maxEnergy);
+            if (cloudData.energyCost !== undefined) state.energyCost = Number(cloudData.energyCost);
+            updateUI();
+        }, (error) => console.error('Ошибка синхронизации баланса:', error));
+
         // Обработка Тапа с атомарным increment для баланса
         const coinBtn = document.getElementById('coin-btn');
 
@@ -603,6 +646,8 @@
 
         // Регенерация энергии
         setInterval(() => {
+            // В фоне энергию не начисляем таймером: при возврате считаем её по времени отсутствия.
+            if (document.visibilityState !== 'visible') return;
             if (state.energy < state.maxEnergy) {
                 state.energy = Math.min(state.maxEnergy, state.energy + 3);
                 updateUI();
@@ -611,6 +656,8 @@
 
         // Синхронизация накопленных тапов и энергии в Firestore каждые 3 секунды через атомарный increment
         setInterval(async () => {
+            // Не обновляем lastEnergyAt из фонового таймера, иначе офлайн-регенерация собьётся.
+            if (document.visibilityState !== 'visible') return;
             if (accumulatedTaps > 0) {
                 const tapsToSend = accumulatedTaps;
                 accumulatedTaps = 0;
@@ -643,30 +690,42 @@
                 }
             }
             try {
-                await runTransaction(db, async (transaction) => {
+                const purchasedUpgrade = await runTransaction(db, async (transaction) => {
                     const snap = await transaction.get(userDocRef);
                     const data = snap.exists() ? snap.data() : {};
                     const balance = Number(data.balance || 0);
                     if (type === 'multitap') {
                         const cost = Number(data.multitapCost ?? state.multitapCost);
-                        if (balance < cost) return;
-                        transaction.set(userDocRef, {
+                        if (balance < cost) return null;
+                        const upgrade = {
                             balance: balance - cost,
                             tapValue: Number(data.tapValue ?? state.tapValue) + 1,
                             multitapCost: cost * 2
-                        }, { merge: true });
+                        };
+                        transaction.set(userDocRef, upgrade, { merge: true });
+                        return upgrade;
                     } else if (type === 'energy') {
                         const cost = Number(data.energyCost ?? state.energyCost);
-                        if (balance < cost) return;
-                        transaction.set(userDocRef, {
+                        if (balance < cost) return null;
+                        const oldMax = Number(data.maxEnergy ?? state.maxEnergy);
+                        const upgrade = {
                             balance: balance - cost,
-                            maxEnergy: Number(data.maxEnergy ?? state.maxEnergy) + 500,
-                            energy: Math.min(Number(data.maxEnergy ?? state.maxEnergy) + 500,
-                                Number(data.energy ?? state.energy) + 500),
+                            maxEnergy: oldMax + 500,
+                            energy: Math.min(oldMax + 500, Number(data.energy ?? state.energy) + 500),
                             energyCost: cost * 2
-                        }, { merge: true });
+                        };
+                        transaction.set(userDocRef, upgrade, { merge: true });
+                        return upgrade;
                     }
+                    return null;
                 });
+                if (purchasedUpgrade) {
+                    // Дублируем сохранение параметров улучшения после успешной транзакции.
+                    // Баланс повторно не записываем, чтобы не перезаписать параллельные начисления.
+                    const savedUpgrade = { ...purchasedUpgrade };
+                    delete savedUpgrade.balance;
+                    await setDoc(userDocRef, savedUpgrade, { merge: true });
+                }
                 await loadUserData();
             } catch (err) {
                 console.error("Ошибка покупки улучшения:", err);
@@ -678,9 +737,29 @@
         window.launchGame = function(url) {
             const game = new URL(url);
             game.searchParams.set('uid', userId);
-            game.searchParams.set('returnUrl', window.location.href);
             window.location.href = game.href;
         };
+
+        // При сворачивании сохраняем текущую энергию и время; пока бот закрыт, энергия копится постепенно.
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'hidden') {
+                const pending = accumulatedTaps;
+                accumulatedTaps = 0;
+                try {
+                    const payload = {
+                        energy: state.energy,
+                        lastEnergyAt: Date.now()
+                    };
+                    if (pending > 0) payload.balance = increment(pending);
+                    await setDoc(userDocRef, payload, { merge: true });
+                } catch (err) {
+                    if (pending > 0) accumulatedTaps += pending;
+                    console.error('Не удалось сохранить состояние при сворачивании:', err);
+                }
+            } else {
+                await loadUserData();
+            }
+        });
 
         // При возвращении в тапалку — подтягиваем актуальный баланс из базы (включая монеты из ранера)
         window.addEventListener('focus', async () => {
