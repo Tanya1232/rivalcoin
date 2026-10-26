@@ -17,6 +17,8 @@
         }
 
         * {
+            -webkit-tap-highlight-color: transparent !important;
+            tap-highlight-color: transparent;
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -125,6 +127,7 @@
         .big-coin-btn {
             -webkit-appearance: none;
             appearance: none;
+            border: 8px solid #fef08a;
             -webkit-tap-highlight-color: transparent !important;
             -webkit-touch-callout: none;
             touch-action: manipulation;
@@ -737,6 +740,7 @@
         window.launchGame = function(url) {
             const game = new URL(url);
             game.searchParams.set('uid', userId);
+            game.searchParams.set('returnUrl', window.location.href);
             window.location.href = game.href;
         };
 
