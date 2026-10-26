@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Rival Ecosystem & Hub</title>
-    <!-- Telegram WebApp SDK -->
+    <title>RivalCoin</title>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Monetag SDK: тот же рекламный блок, что используется в Subway Runner -->
     <script src="//libtl.com/sdk.js" data-zone="11997011" data-sdk="show_11997011"></script>
+
     <style>
         :root {
             --bg-color: #0f172a;
             --card-bg: rgba(30, 41, 59, 0.7);
             --accent-gold: #f59e0b;
-            --accent-glow: #fbbf24;
             --text-main: #ffffff;
             --text-sub: #94a3b8;
         }
@@ -28,17 +27,16 @@
         }
 
         body {
-            background-color: var(--bg-color);
+            background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 70%);
             color: var(--text-main);
             height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             overflow: hidden;
-            background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 70%);
         }
 
-        /* Шапка баланса */
         .header {
             padding: 20px 15px 10px;
             text-align: center;
@@ -81,7 +79,6 @@
             text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
         }
 
-        /* Контентные вкладки */
         .tab-content {
             flex: 1;
             display: none;
@@ -90,13 +87,13 @@
             justify-content: center;
             padding: 15px;
             overflow-y: auto;
+            overscroll-behavior: contain;
         }
 
         .tab-content.active {
             display: flex;
         }
 
-        /* Вкладка Тапалка */
         .tapper-area {
             position: relative;
             display: flex;
@@ -107,8 +104,8 @@
         }
 
         .big-coin-btn {
-            width: 250px;
-            height: 250px;
+            width: min(250px, 65vw);
+            height: min(250px, 65vw);
             border-radius: 50%;
             background: radial-gradient(circle, #fbbf24 0%, #d97706 70%, #78350f 100%);
             border: 8px solid #fef08a;
@@ -120,6 +117,7 @@
             transition: transform 0.05s ease;
             margin: 20px 0;
             position: relative;
+            touch-action: manipulation;
         }
 
         .big-coin-btn:active {
@@ -127,13 +125,12 @@
         }
 
         .big-coin-symbol {
-            font-size: 90px;
+            font-size: min(90px, 22vw);
             font-weight: 900;
             color: #fff;
             text-shadow: 0 4px 10px rgba(0,0,0,0.4);
         }
 
-        /* Энергия */
         .energy-box {
             width: 80%;
             max-width: 300px;
@@ -166,7 +163,6 @@
             transition: width 0.2s ease;
         }
 
-        /* Анимация клика (+1) */
         .tap-pop {
             position: absolute;
             color: #ffffff;
@@ -183,7 +179,6 @@
             100% { opacity: 0; transform: translateY(-100px) scale(1.3); }
         }
 
-        /* Карточки Игр / Прокачки / Кошелька */
         .card-list {
             width: 100%;
             max-width: 400px;
@@ -201,18 +196,21 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 10px;
         }
 
         .card-left {
             display: flex;
             align-items: center;
             gap: 14px;
+            min-width: 0;
         }
 
         .card-icon {
             font-size: 32px;
             width: 50px;
             height: 50px;
+            flex-shrink: 0;
             background: rgba(255,255,255,0.08);
             border-radius: 12px;
             display: flex;
@@ -230,25 +228,31 @@
             font-size: 12px;
             color: var(--text-sub);
             margin-top: 3px;
+            overflow-wrap: anywhere;
         }
 
         .action-btn {
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: #fff;
             border: none;
-            padding: 10px 18px;
+            padding: 10px 14px;
             border-radius: 12px;
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            flex-shrink: 0;
         }
 
         .action-btn:active {
             transform: scale(0.95);
         }
 
-        /* Нижнее меню */
+        .action-btn:disabled {
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
         .nav-bar {
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(15px);
@@ -256,6 +260,8 @@
             display: flex;
             justify-content: space-around;
             padding: 10px 2px 16px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            flex-shrink: 0;
         }
 
         .nav-item {
@@ -278,11 +284,40 @@
         .nav-icon {
             font-size: 22px;
         }
+
+        select {
+            max-width: 100%;
+        }
+
+        @media (max-height: 650px) {
+            .header {
+                padding-top: 10px;
+            }
+
+            .balance-value {
+                font-size: 30px;
+            }
+
+            .big-coin-btn {
+                margin: 10px 0;
+            }
+
+            .tab-content {
+                padding: 8px;
+            }
+
+            .card {
+                padding: 11px;
+            }
+
+            .nav-bar {
+                padding-top: 6px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Шапка -->
     <div class="header">
         <div class="brand-title">RIVAL ECOSYSTEM</div>
         <div class="balance-container">
@@ -291,7 +326,7 @@
         </div>
     </div>
 
-    <!-- Вкладка 1: Тапалка -->
+    <!-- RivalCoin -->
     <div class="tab-content active" id="tab-tapper">
         <div class="tapper-area">
             <div class="big-coin-btn" id="coin-btn">
@@ -310,7 +345,7 @@
         </div>
     </div>
 
-    <!-- Вкладка 2: Игры (Ecosystem Hub) -->
+    <!-- Игры -->
     <div class="tab-content" id="tab-games">
         <div class="card-list">
             <div class="card">
@@ -318,7 +353,7 @@
                     <div class="card-icon">🏃</div>
                     <div>
                         <div class="card-title">Subway Runner 3D</div>
-                        <div class="card-sub">Зарабатывай $RIVAL в беге!</div>
+                        <div class="card-sub">Зарабатывай RIVAL в беге!</div>
                     </div>
                 </div>
                 <button class="action-btn" onclick="launchGame('https://tanya1232.github.io/subway-runner-3d/')">ИГРАТЬ</button>
@@ -329,13 +364,13 @@
                     <div class="card-icon">🎯</div>
                     <div>
                         <div class="card-title">Strike Arena 3D</div>
-                        <div class="card-sub">Новая 3D-игра в экосистеме!</div>
+                        <div class="card-sub">Играй и зарабатывай RIVAL!</div>
                     </div>
                 </div>
                 <button class="action-btn" onclick="launchGame('https://tanya1232.github.io/strike-arena-3d/')">ИГРАТЬ</button>
             </div>
 
-            <div class="card" style="opacity: 0.6;">
+            <div class="card" style="opacity:0.6;">
                 <div class="card-left">
                     <div class="card-icon">🚗</div>
                     <div>
@@ -343,12 +378,12 @@
                         <div class="card-sub">Скоро в экосистеме...</div>
                     </div>
                 </div>
-                <button class="action-btn" style="background: #475569;" disabled>LOCK</button>
+                <button class="action-btn" style="background:#475569;" disabled>LOCK</button>
             </div>
         </div>
     </div>
 
-    <!-- Вкладка 3: Прокачка -->
+    <!-- Прокачка -->
     <div class="tab-content" id="tab-boosts">
         <div class="card-list">
             <div class="card">
@@ -375,7 +410,7 @@
         </div>
     </div>
 
-    <!-- Вкладка 4: Рефералы и задания -->
+    <!-- Задания и рефералы -->
     <div class="tab-content" id="tab-referrals">
         <div class="card-list">
             <div class="card">
@@ -388,6 +423,7 @@
                 </div>
                 <button class="action-btn" onclick="copyReferralLink()">ПРИГЛАСИТЬ</button>
             </div>
+
             <div class="card">
                 <div class="card-left">
                     <div class="card-icon">📣</div>
@@ -398,37 +434,48 @@
                 </div>
                 <button class="action-btn" onclick="joinGroup()">ОТКРЫТЬ</button>
             </div>
+
             <div class="card" style="display:block;">
                 <div class="card-title">Твоя реферальная ссылка</div>
-                <div class="card-sub" id="referral-link-text" style="overflow-wrap:anywhere; margin:8px 0;">Загружаем ссылку...</div>
-                <div class="card-sub" id="referral-status">Награда за друга начисляется один раз за нового игрока.</div>
-            </div>
-            <div class="card" style="display:block;">
-                <div class="card-title">Важно</div>
-                <div class="card-sub">Пока это простая версия: вступление в Telegram-группу не проверяется автоматически. Для честной проверки понадобится бот или сервер.</div>
+                <div class="card-sub" id="referral-link-text" style="overflow-wrap:anywhere;margin:8px 0;">Загружаем ссылку...</div>
+                <div class="card-sub" id="referral-status"></div>
             </div>
         </div>
     </div>
 
-    <!-- Вкладка 5: Пассивный доход -->
+    <!-- Пассивный доход -->
     <div class="tab-content" id="tab-passive">
         <div class="card-list">
             <div class="card" style="display:block;">
-                <div class="card-title">⛏️ Пассивная добыча</div>
-                <div class="card-sub" style="margin-top:6px;">Каждый активный слот приносит 100 RIVAL в час. Максимум — 10 слотов (1 000 RIVAL/час).</div>
-                <div class="card-sub" id="passive-slots-status" style="margin-top:10px;">Активно слотов: 0/10</div>
-                <div class="card-sub" id="passive-pending-status" style="margin-top:4px;">Накоплено: 0 RIVAL</div>
-                <button class="action-btn" id="activate-passive-btn" style="width:100%; margin-top:12px;" onclick="activatePassiveSlot()">АКТИВИРОВАТЬ СЛОТ</button>
-                <div class="card-sub" style="margin-top:8px;">Для активации каждого слота нужно успешно пройти рекламный просмотр Monetag.</div>
+                <div class="card-title">⛏️ Пассивный доход</div>
+                <div class="card-sub" style="margin-top:6px;">100 RIVAL за каждый час. Максимум — 10 часов и 1 000 RIVAL.</div>
+
+                <label for="passive-hours" class="card-sub" style="display:block;margin-top:12px;">Выбери время добычи</label>
+                <select id="passive-hours" style="width:100%;margin-top:6px;padding:12px;border-radius:10px;background:#1e293b;color:#fff;border:1px solid #475569;font-size:16px;">
+                    <option value="1">1 час — 100 RIVAL</option>
+                    <option value="2">2 часа — 200 RIVAL</option>
+                    <option value="3">3 часа — 300 RIVAL</option>
+                    <option value="4">4 часа — 400 RIVAL</option>
+                    <option value="5">5 часов — 500 RIVAL</option>
+                    <option value="6">6 часов — 600 RIVAL</option>
+                    <option value="7">7 часов — 700 RIVAL</option>
+                    <option value="8">8 часов — 800 RIVAL</option>
+                    <option value="9">9 часов — 900 RIVAL</option>
+                    <option value="10">10 часов — 1 000 RIVAL</option>
+                </select>
+
+                <div class="card-sub" id="passive-slots-status" style="margin-top:10px;">Нет активной добычи</div>
+                <div class="card-sub" id="passive-pending-status" style="margin-top:4px;">Выбери часы и запусти добычу.</div>
+                <button class="action-btn" id="activate-passive-btn" style="width:100%;margin-top:12px;" onclick="activatePassiveSlot()">НАЧАТЬ ДОБЫЧУ</button>
             </div>
         </div>
     </div>
 
-    <!-- Вкладка 6: Кошелек -->
+    <!-- Кошелек -->
     <div class="tab-content" id="tab-wallet">
         <div class="card-list">
-            <div class="card" style="justify-content: center; text-align: center; padding: 30px 15px;">
-                <div style="color: var(--text-sub); font-size: 15px; line-height: 1.5;">
+            <div class="card" style="justify-content:center;text-align:center;padding:30px 15px;">
+                <div style="color:var(--text-sub);font-size:15px;line-height:1.5;">
                     👛 Кошелек пока пуст.<br>Интеграция Web3 появится позже!
                 </div>
             </div>
@@ -439,7 +486,7 @@
     <div class="nav-bar">
         <div class="nav-item active" onclick="switchTab('tapper', this)">
             <div class="nav-icon">🪙</div>
-            <span>Тапалка</span>
+            <span>RivalCoin</span>
         </div>
         <div class="nav-item" onclick="switchTab('games', this)">
             <div class="nav-icon">🎮</div>
@@ -463,12 +510,12 @@
         </div>
     </div>
 
-    <!-- Интеграция Firebase и логика приложения -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import {
+            getFirestore, doc, getDoc, setDoc, runTransaction
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        // Твоя конфигурация из консоли Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDfnuR07pt2IIWCScmI7H4aSy57XIHZpHg",
             authDomain: "rivalcoin-738cc.firebaseapp.com",
@@ -478,28 +525,31 @@
             appId: "1:53292984166:web:63d508b16bb8c04affcaa7"
         };
 
-        // Инициализация Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Инициализация Telegram WebApp
         const tg = window.Telegram ? window.Telegram.WebApp : null;
+
         if (tg) {
             tg.ready();
             tg.expand();
         }
 
-        // Определение ID пользователя (Из Telegram или тестовый для браузера)
         let userId = tg?.initDataUnsafe?.user?.id;
+
         if (!userId) {
-            userId = localStorage.getItem('rival_demo_uid') || 'demo_' + Math.floor(Math.random() * 1000000);
-            localStorage.setItem('rival_demo_uid', userId);
+            userId = localStorage.getItem('rival_demo_uid');
+
+            if (!userId) {
+                userId = 'demo_' + Math.floor(Math.random() * 1000000);
+                localStorage.setItem('rival_demo_uid', userId);
+            }
         }
 
         const userDocRef = doc(db, "users", String(userId));
-        let isDirty = false; // Флаг для синхронизации изменений с базой
 
-        // Начальное состояние пользователя
+        let isDirty = false;
+        let isLoadingUser = false;
         let state = {
             balance: 0,
             energy: 1000,
@@ -509,167 +559,244 @@
             energyCost: 200,
             username: tg?.initDataUnsafe?.user?.username || 'Player',
             lastEnergyUpdate: Date.now(),
-            passiveSlots: 0,
-            lastPassiveUpdate: Date.now(),
+            passiveRunHours: 0,
+            passiveRunStartedAt: 0,
             groupRewardClaimed: false
         };
 
-        // Загрузка данных, офлайн-восстановление энергии и пассивного дохода
-        let isLoadingUser = false;
         async function loadUserData() {
             if (isLoadingUser) return;
             isLoadingUser = true;
+
             try {
-                const docSnap = await getDoc(userDocRef);
-                if (docSnap.exists()) {
-                    const cloudData = docSnap.data();
-                    state = { ...state, ...cloudData };
+                const snap = await getDoc(userDocRef);
+
+                if (snap.exists()) {
+                    state = { ...state, ...snap.data() };
                 } else {
                     state.lastEnergyUpdate = Date.now();
-                    state.lastPassiveUpdate = Date.now();
                     await setDoc(userDocRef, state);
                     await processReferral();
                 }
 
                 const now = Date.now();
-                const energyTime = Number(state.lastEnergyUpdate) || now;
-                const elapsedSeconds = Math.max(0, Math.floor((now - energyTime) / 1000));
-                state.energy = Math.min(Number(state.maxEnergy) || 1000, (Number(state.energy) || 0) + elapsedSeconds * 3);
+                const lastEnergy = Number(state.lastEnergyUpdate) || now;
+                const elapsed = Math.max(0, Math.floor((now - lastEnergy) / 1000));
+
+                state.energy = Math.min(
+                    Number(state.maxEnergy) || 1000,
+                    (Number(state.energy) || 0) + elapsed * 3
+                );
+
                 state.lastEnergyUpdate = now;
 
-                // Пассивный доход: начисляем за прошедшее время, даже если приложение закрыто.
-                const slots = Math.max(0, Math.min(10, Number(state.passiveSlots) || 0));
-                const passiveTime = Number(state.lastPassiveUpdate) || now;
-                const wholeHours = Math.max(0, Math.floor((now - passiveTime) / 3600000));
-                state.balance = (Number(state.balance) || 0) + wholeHours * slots * 100;
-                // Сохраняем остаток времени, чтобы короткие заходы не обнуляли прогресс часа.
-                state.lastPassiveUpdate = passiveTime + wholeHours * 3600000;
+                const hours = Math.max(0, Math.min(10, Number(state.passiveRunHours) || 0));
+                const startedAt = Number(state.passiveRunStartedAt) || 0;
+
+                if (hours > 0 && startedAt > 0 && now - startedAt >= hours * 3600000) {
+                    state.balance = (Number(state.balance) || 0) + hours * 100;
+                    state.passiveRunHours = 0;
+                    state.passiveRunStartedAt = 0;
+                    state.passiveLastReward = now;
+                    await saveUserData();
+                    alert(`Поздравляем! Вам начислено ${hours * 100} RIVAL!`);
+                }
+
                 await saveUserData();
                 updateUI();
                 updateReferralUI();
                 updatePassiveUI();
             } catch (error) {
                 console.error("Ошибка загрузки данных из Firestore:", error);
-                document.getElementById('referral-status').innerText = 'Не удалось загрузить данные. Проверь подключение к интернету.';
             } finally {
                 isLoadingUser = false;
             }
         }
 
-        // Начисляем пригласившему 10 000 только один раз за нового пользователя.
         async function processReferral() {
             const params = new URLSearchParams(window.location.search);
             const referrerId = params.get('ref') || tg?.initDataUnsafe?.start_param || '';
+
             if (!referrerId || String(referrerId) === String(userId)) return;
+
             const referrerRef = doc(db, 'users', String(referrerId));
+
             try {
                 await runTransaction(db, async (transaction) => {
                     const newUserSnap = await transaction.get(userDocRef);
                     if (!newUserSnap.exists()) return;
+
                     const newUserData = newUserSnap.data();
+
                     if (newUserData.referredBy || newUserData.referralProcessed) return;
-                    const refSnap = await transaction.get(referrerRef);
-                    if (!refSnap.exists()) return;
-                    const refData = refSnap.data();
-                    transaction.update(referrerRef, { balance: (Number(refData.balance) || 0) + 10000 });
-                    transaction.update(userDocRef, { referredBy: String(referrerId), referralProcessed: true });
+
+                    const referrerSnap = await transaction.get(referrerRef);
+                    if (!referrerSnap.exists()) return;
+
+                    const referrerData = referrerSnap.data();
+
+                    transaction.update(referrerRef, {
+                        balance: (Number(referrerData.balance) || 0) + 10000
+                    });
+
+                    transaction.update(userDocRef, {
+                        referredBy: String(referrerId),
+                        referralProcessed: true
+                    });
                 });
-            } catch (err) {
-                console.error('Ошибка обработки реферала:', err);
+            } catch (error) {
+                console.error('Ошибка обработки реферала:', error);
             }
+        }
+
+        function makeReferralLink() {
+            const url = new URL(window.location.href);
+            url.search = '';
+            url.hash = '';
+            url.searchParams.set('ref', String(userId));
+            return url.href;
         }
 
         function updateReferralUI() {
-            const link = new URL(window.location.href);
-            link.search = '';
-            link.hash = '';
-            link.searchParams.set('ref', String(userId));
             const text = document.getElementById('referral-link-text');
-            if (text) text.textContent = link.href;
-            const status = document.getElementById('referral-status');
-            if (status) status.textContent = state.referredBy ? 'Ты пришёл по реферальной ссылке. Спасибо!' : 'Награда за нового друга: 10 000 RIVAL один раз за аккаунт.';
+            if (text) text.textContent = makeReferralLink();
         }
 
         window.copyReferralLink = async function() {
-            const link = new URL(window.location.href);
-            link.search = '';
-            link.hash = '';
-            link.searchParams.set('ref', String(userId));
+            const link = makeReferralLink();
+
             try {
-                await navigator.clipboard.writeText(link.href);
-                document.getElementById('referral-status').textContent = 'Ссылка скопирована! Отправь её другу.';
-            } catch (err) {
-                document.getElementById('referral-status').textContent = 'Скопируй ссылку вручную из поля выше.';
+                await navigator.clipboard.writeText(link);
+                alert('Ссылка скопирована!');
+            } catch (error) {
+                const text = document.getElementById('referral-link-text');
+                if (text) {
+                    const range = document.createRange();
+                    range.selectNodeContents(text);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                alert('Выдели ссылку и скопируй её.');
             }
         };
 
-        window.joinGroup = function() {
-            window.open('https://t.me/ProRivalArena', '_blank', 'noopener');
+        window.joinGroup = async function() {
             if (state.groupRewardClaimed) {
-                document.getElementById('referral-status').textContent = 'Награда за группу уже получена.';
+                window.open('https://t.me/ProRivalArena', '_blank', 'noopener');
                 return;
             }
-            const ok = confirm('Ты вступил(а) в группу ProRivalArena? В простой версии вступление не проверяется автоматически. Начислить 5 000 RIVAL?');
-            if (!ok) return;
-            state.balance = (Number(state.balance) || 0) + 5000;
+
             state.groupRewardClaimed = true;
-            saveUserData().then(() => {
-                updateUI();
-                document.getElementById('referral-status').textContent = 'Начислено 5 000 RIVAL за вступление в группу.';
-            });
+            state.balance = (Number(state.balance) || 0) + 5000;
+
+            await saveUserData();
+            updateUI();
+
+            alert('Поздравляем! Вам начислено 5 000 RIVAL!');
+            window.open('https://t.me/ProRivalArena', '_blank', 'noopener');
         };
 
         function updatePassiveUI() {
-            const slots = Math.max(0, Math.min(10, Number(state.passiveSlots) || 0));
-            const slotEl = document.getElementById('passive-slots-status');
-            const pendingEl = document.getElementById('passive-pending-status');
-            const btn = document.getElementById('activate-passive-btn');
-            if (slotEl) slotEl.textContent = `Активно слотов: ${slots}/10 · ${slots * 100} RIVAL/час`;
-            if (pendingEl) pendingEl.textContent = `Доход начисляется автоматически при открытии приложения.`;
-            if (btn) {
-                btn.disabled = slots >= 10;
-                btn.textContent = slots >= 10 ? 'МАКСИМУМ 10 СЛОТОВ' : 'АКТИВИРОВАТЬ СЛОТ';
-                btn.style.opacity = slots >= 10 ? '0.6' : '1';
+            const hours = Math.max(0, Math.min(10, Number(state.passiveRunHours) || 0));
+            const startedAt = Number(state.passiveRunStartedAt) || 0;
+            const running = hours > 0 && startedAt > 0;
+
+            const slot = document.getElementById('passive-slots-status');
+            const pending = document.getElementById('passive-pending-status');
+            const button = document.getElementById('activate-passive-btn');
+            const picker = document.getElementById('passive-hours');
+
+            if (slot) {
+                slot.textContent = running
+                    ? `Добыча идёт: ${hours} ч · награда ${hours * 100} RIVAL`
+                    : 'Нет активной добычи';
             }
+
+            if (pending) {
+                if (running) {
+                    const remaining = Math.max(0, hours * 3600000 - (Date.now() - startedAt));
+                    const minutes = Math.ceil(remaining / 60000);
+                    const h = Math.floor(minutes / 60);
+                    const m = minutes % 60;
+                    pending.textContent = `Осталось: ${h} ч ${m} мин`;
+                } else {
+                    pending.textContent = 'Выбери часы и запусти добычу.';
+                }
+            }
+
+            if (button) {
+                button.disabled = running || Boolean(window._rivalMonetagBusy);
+                button.textContent = running
+                    ? 'ДОБЫЧА УЖЕ ИДЁТ'
+                    : (window._rivalMonetagBusy ? 'ЗАГРУЗКА РЕКЛАМЫ…' : 'НАЧАТЬ ДОБЫЧУ');
+                button.style.opacity = button.disabled ? '0.6' : '1';
+            }
+
+            if (picker) picker.disabled = running || Boolean(window._rivalMonetagBusy);
         }
 
         window.activatePassiveSlot = async function() {
-            const slots = Math.max(0, Math.min(10, Number(state.passiveSlots) || 0));
-            if (slots >= 10) {
+            if (Number(state.passiveRunHours) > 0 && Number(state.passiveRunStartedAt) > 0) {
                 updatePassiveUI();
                 return;
             }
+
             if (window._rivalMonetagBusy) return;
+
+            const picker = document.getElementById('passive-hours');
+            const hours = Math.max(1, Math.min(10, Number(picker?.value) || 1));
+
             if (typeof window.show_11997011 !== 'function') {
-                alert('Monetag пока не загрузился. Проверь интернет и попробуй ещё раз.');
+                alert('Реклама пока не загрузилась. Попробуй ещё раз.');
                 return;
             }
 
             window._rivalMonetagBusy = true;
-            const btn = document.getElementById('activate-passive-btn');
-            if (btn) { btn.disabled = true; btn.textContent = 'ЗАГРУЗКА РЕКЛАМЫ…'; }
+            updatePassiveUI();
+
             try {
-                // Слот выдаётся только после успешного завершения вызова Monetag.
                 await window.show_11997011();
-                const latestSlots = Math.max(0, Math.min(10, Number(state.passiveSlots) || 0));
-                if (latestSlots < 10) {
-                    state.passiveSlots = latestSlots + 1;
-                    // Сохраняем накопленное время, не сбрасывая прогресс уже активных слотов.
-                    await saveUserData();
-                    updatePassiveUI();
-                    document.getElementById('referral-status')?.textContent;
-                    alert('Слот активирован! Он приносит 100 RIVAL в час.');
-                }
+
+                state.passiveRunHours = hours;
+                state.passiveRunStartedAt = Date.now();
+
+                await saveUserData();
+                updatePassiveUI();
+
+                alert(`Добыча началась! Через ${hours} ч будет начислено ${hours * 100} RIVAL.`);
             } catch (error) {
                 console.warn('Monetag ad did not complete:', error);
-                alert('Реклама не была завершена или сейчас недоступна. Слот не активирован.');
+                alert('Реклама сейчас недоступна или не была завершена. Добыча не запущена.');
             } finally {
                 window._rivalMonetagBusy = false;
                 updatePassiveUI();
             }
         };
 
-        // Сохранение данных в Cloud Firestore
+        async function finishPassiveRunIfReady() {
+            const hours = Math.max(0, Math.min(10, Number(state.passiveRunHours) || 0));
+            const startedAt = Number(state.passiveRunStartedAt) || 0;
+
+            if (!hours || !startedAt || Date.now() - startedAt < hours * 3600000) return;
+
+            state.balance = (Number(state.balance) || 0) + hours * 100;
+            state.passiveRunHours = 0;
+            state.passiveRunStartedAt = 0;
+            state.passiveLastReward = Date.now();
+
+            await saveUserData();
+            updateUI();
+            updatePassiveUI();
+
+            alert(`Поздравляем! Вам начислено ${hours * 100} RIVAL!`);
+        }
+
+        setInterval(async () => {
+            await finishPassiveRunIfReady();
+            updatePassiveUI();
+        }, 30000);
+
         async function saveUserData() {
             try {
                 await setDoc(userDocRef, state, { merge: true });
@@ -678,74 +805,87 @@
             }
         }
 
-        // Обновление элементов UI
         function updateUI() {
-            document.getElementById('balance').innerText = state.balance.toLocaleString();
-            document.getElementById('energy-text').innerText = `${state.energy} / ${state.maxEnergy}`;
-            
-            const fillPercent = Math.max(0, Math.min(100, (state.energy / state.maxEnergy) * 100));
-            document.getElementById('energy-fill').style.width = `${fillPercent}%`;
-            if (document.getElementById('passive-slots-status')) updatePassiveUI();
+            const balanceEl = document.getElementById('balance');
+            const energyText = document.getElementById('energy-text');
+            const energyFill = document.getElementById('energy-fill');
 
-            document.getElementById('multitap-sub').innerText = `+${state.tapValue + 1} за тап | Цена: ${state.multitapCost}`;
-            document.getElementById('energy-sub').innerText = `+500 к базе | Цена: ${state.energyCost}`;
+            balanceEl.innerText = (Number(state.balance) || 0).toLocaleString();
+            energyText.innerText = `${state.energy} / ${state.maxEnergy}`;
+
+            const percent = Math.max(0, Math.min(100, (state.energy / state.maxEnergy) * 100));
+            energyFill.style.width = `${percent}%`;
+
+            document.getElementById('multitap-sub').innerText =
+                `+${state.tapValue + 1} за тап | Цена: ${state.multitapCost}`;
+
+            document.getElementById('energy-sub').innerText =
+                `+500 к базе | Цена: ${state.energyCost}`;
+
+            updatePassiveUI();
         }
 
-        // Обработка Тапа
         const coinBtn = document.getElementById('coin-btn');
 
-        function handleTap(e) {
-            if (e.type === 'touchstart') e.preventDefault();
+        function handleTap(event) {
+            if (event.type === 'touchstart') event.preventDefault();
 
             if (state.energy < state.tapValue) return;
 
             state.energy -= state.tapValue;
             state.balance += state.tapValue;
-            isDirty = true; // Отмечаем, что есть несинхронизированные данные
+            state.lastEnergyUpdate = Date.now();
+            isDirty = true;
 
-            if (tg && tg.HapticFeedback) {
+            if (tg?.HapticFeedback) {
                 tg.HapticFeedback.impactOccurred('medium');
             }
 
-            // Вылетающий текст +X
             const rect = coinBtn.getBoundingClientRect();
-            let clientX = e.clientX;
-            let clientY = e.clientY;
+            let clientX = event.clientX;
+            let clientY = event.clientY;
 
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
+            if (event.touches && event.touches.length > 0) {
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
             }
 
-            const x = (clientX || (rect.left + rect.width / 2)) - rect.left;
-            const y = (clientY || (rect.top + rect.height / 2)) - rect.top;
+            const x = (clientX || rect.left + rect.width / 2) - rect.left;
+            const y = (clientY || rect.top + rect.height / 2) - rect.top;
 
             const pop = document.createElement('div');
             pop.className = 'tap-pop';
-            pop.innerText = `+${state.tapValue}`;
+            pop.textContent = `+${state.tapValue}`;
             pop.style.left = `${x}px`;
             pop.style.top = `${y}px`;
-            coinBtn.appendChild(pop);
 
+            coinBtn.appendChild(pop);
             setTimeout(() => pop.remove(), 800);
 
             updateUI();
         }
 
         coinBtn.addEventListener('touchstart', handleTap, { passive: false });
-        coinBtn.addEventListener('click', handleTap);
 
-        // Регенерация энергии (3 ед/сек)
+        coinBtn.addEventListener('click', function(event) {
+            // Не начисляем второй тап после touchstart на мобильных устройствах.
+            if (event.detail === 0) return;
+            if ('ontouchstart' in window) return;
+            handleTap(event);
+        });
+
+        // Восстановление энергии: 3 единицы в секунду, в том числе офлайн.
         setInterval(() => {
-            state.lastEnergyUpdate = Date.now();
             if (state.energy < state.maxEnergy) {
                 state.energy = Math.min(state.maxEnergy, state.energy + 3);
+                state.lastEnergyUpdate = Date.now();
                 isDirty = true;
                 updateUI();
+            } else {
+                state.lastEnergyUpdate = Date.now();
             }
         }, 1000);
 
-        // Авто-сохранение в облако каждые 3 секунды при наличии изменений
         setInterval(() => {
             if (isDirty) {
                 saveUserData();
@@ -753,45 +893,46 @@
             }
         }, 3000);
 
-        // Функция покупки апгрейдов
-        window.buyUpgrade = function(type) {
+        window.buyUpgrade = async function(type) {
             if (type === 'multitap' && state.balance >= state.multitapCost) {
                 state.balance -= state.multitapCost;
                 state.tapValue += 1;
                 state.multitapCost *= 2;
-                saveUserData();
             } else if (type === 'energy' && state.balance >= state.energyCost) {
                 state.balance -= state.energyCost;
                 state.maxEnergy += 500;
                 state.energy += 500;
                 state.energyCost *= 2;
-                saveUserData();
+            } else {
+                return;
             }
+
+            await saveUserData();
             updateUI();
         };
 
-        // Запуск сторонних игр с передачей userId
         window.launchGame = function(url) {
             const gameUrl = new URL(url);
             gameUrl.searchParams.set('uid', String(userId));
             gameUrl.searchParams.set('returnUrl', window.location.href);
-            if (tg && typeof tg.openLink === 'function') tg.openLink(gameUrl.href);
-            else window.location.href = gameUrl.href;
+
+            if (tg && typeof tg.openLink === 'function') {
+                tg.openLink(gameUrl.href);
+            } else {
+                window.location.href = gameUrl.href;
+            }
         };
 
-        // Авто-обновление баланса при возвращении игрока в тапалку из игры
-        window.addEventListener('focus', loadUserData);
-
-        // Переключение вкладок
-        window.switchTab = function(tabName, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        window.switchTab = function(tabName, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
 
             document.getElementById(`tab-${tabName}`).classList.add('active');
-            el.classList.add('active');
+            element.classList.add('active');
         };
 
-        // Запуск приложения и загрузка прогресса из Firestore
+        window.addEventListener('focus', loadUserData);
+
         loadUserData();
     </script>
 </body>
