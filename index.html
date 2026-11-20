@@ -559,7 +559,19 @@
                 const snap = await getDoc(userDocRef);
 
                 if (snap.exists()) {
-                    state = { ...state, ...snap.data() };
+                    const cloudData = snap.data();
+                    state = { ...state, ...cloudData };
+
+                    // Максимальная энергия берётся из Firestore и никогда не откатывается
+                    // к стартовым 1000 из локального шаблона.
+                    const savedMaxEnergy = Number(cloudData.maxEnergy);
+                    state.maxEnergy = Number.isFinite(savedMaxEnergy) && savedMaxEnergy > 0
+                        ? Math.max(1000, savedMaxEnergy)
+                        : Math.max(1000, Number(state.maxEnergy) || 1000);
+                    state.energy = Math.max(0, Math.min(
+                        state.maxEnergy,
+                        Number.isFinite(Number(cloudData.energy)) ? Number(cloudData.energy) : state.maxEnergy
+                    ));
                 } else {
                     state.lastEnergyUpdate = Date.now();
                     await setDoc(userDocRef, state);
@@ -789,7 +801,29 @@
 
         async function saveUserData() {
             try {
-                await setDoc(userDocRef, state, { merge: true });
+                // Транзакция читает актуальную запись. Если в облаке уже 4500 энергии,
+                // устаревшее локальное значение 1000 не сможет уменьшить максимум.
+                await runTransaction(db, async (transaction) => {
+                    const snap = await transaction.get(userDocRef);
+                    const cloud = snap.exists() ? snap.data() : {};
+                    const cloudMax = Number(cloud.maxEnergy) || 1000;
+                    const localMax = Number(state.maxEnergy) || 1000;
+                    const safeMaxEnergy = Math.max(1000, cloudMax, localMax);
+                    const safeEnergy = Math.max(0, Math.min(
+                        safeMaxEnergy,
+                        Number(state.energy) || 0
+                    ));
+
+                    const payload = {
+                        ...state,
+                        maxEnergy: safeMaxEnergy,
+                        energy: safeEnergy,
+                        lastEnergyUpdate: Number(state.lastEnergyUpdate) || Date.now()
+                    };
+                    transaction.set(userDocRef, payload, { merge: true });
+                    state.maxEnergy = safeMaxEnergy;
+                    state.energy = safeEnergy;
+                });
             } catch (error) {
                 console.error("Ошибка сохранения в Firestore:", error);
             }
