@@ -6,7 +6,7 @@
     <title>RivalCoin</title>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="//libtl.com/sdk.js" data-zone="11997011" data-sdk="show_11997011"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
     <style>
         :root {
@@ -448,10 +448,10 @@
         <div class="card-list">
             <div class="card" style="display:block;">
                 <div class="card-title">⛏️ Пассивный доход</div>
-                <div class="card-sub" style="margin-top:6px;">100 RIVAL за каждый полный час. Время копится без ограничения.</div>
-                <div class="card-sub" id="passive-slots-status" style="margin-top:12px;">Добыча ещё не запущена</div>
-                <div class="card-sub" id="passive-pending-status" style="margin-top:4px;">Нажми кнопку, чтобы запустить добычу.</div>
-                <button class="action-btn" id="activate-passive-btn" style="width:100%;margin-top:12px;" onclick="activatePassiveSlot()">НАЧАТЬ ДОБЫЧУ</button>
+                <div class="card-sub" style="margin-top:6px;">За каждый просмотр рекламы добавляется 1 час фарма. Каждый полный час приносит 100 RIVAL. Максимум — 12 часов за один цикл.</div>
+                <div class="card-sub" id="passive-slots-status" style="margin-top:12px;">Просмотров: 0 / 12 · Добыча ещё не запущена</div>
+                <div class="card-sub" id="passive-pending-status" style="margin-top:4px;">Посмотри рекламу — получишь +1 час фарма.</div>
+                <button class="action-btn" id="activate-passive-btn" style="width:100%;margin-top:12px;" onclick="activatePassiveSlot()">СМОТРЕТЬ РЕКЛАМУ · +1 ЧАС</button>
             </div>
         </div>
     </div>
@@ -514,6 +514,8 @@
         const db = getFirestore(app);
         // Telegram bot username used for referral deep links (without @).
         const TELEGRAM_BOT_USERNAME = "RivalCoin_bot";
+        const ADSGRAM_BLOCK_ID = "59640";
+        let adsgramController = null;
 
         const tg = window.Telegram ? window.Telegram.WebApp : null;
 
@@ -548,6 +550,9 @@
             lastEnergyUpdate: Date.now(),
             passiveRunHours: 0,
             passiveRunStartedAt: 0,
+            passiveHoursGranted: 0,
+            passiveHoursPaid: 0,
+            passiveEndAt: 0,
             groupRewardClaimed: false
         };
 
@@ -581,12 +586,10 @@
                 const now = Date.now();
 
                 // Миграция сохранений со старой системой выбора 1–10 часов.
-                if (!Number(state.passiveStartedAt) && Number(state.passiveRunStartedAt) > 0) {
-                    state.passiveStartedAt = Number(state.passiveRunStartedAt);
-                    state.passiveLastRewardAt = Number(state.passiveRunStartedAt);
-                    state.passiveRunHours = 0;
-                    state.passiveRunStartedAt = 0;
-                }
+                // Инициализация новых полей фарма без сброса уже сохранённых данных.
+                state.passiveHoursGranted = Math.max(0, Math.min(12, Number(state.passiveHoursGranted) || 0));
+                state.passiveHoursPaid = Math.max(0, Number(state.passiveHoursPaid) || 0);
+                state.passiveEndAt = Number(state.passiveEndAt) || 0;
 
                 const lastEnergy = Number(state.lastEnergyUpdate) || now;
                 const elapsed = Math.max(0, Math.floor((now - lastEnergy) / 1000));
@@ -692,102 +695,151 @@
         };
 
         function getPassiveTimes() {
-            const startedAt = Number(state.passiveStartedAt) || 0;
-            const lastRewardAt = Number(state.passiveLastRewardAt) || startedAt;
-            return { startedAt, lastRewardAt };
+            return {
+                startedAt: Number(state.passiveStartedAt) || 0,
+                lastRewardAt: Number(state.passiveLastRewardAt) || 0,
+                endAt: Number(state.passiveEndAt) || 0,
+                hoursGranted: Math.max(0, Math.min(12, Number(state.passiveHoursGranted) || 0)),
+                hoursPaid: Math.max(0, Number(state.passiveHoursPaid) || 0)
+            };
         }
 
         function updatePassiveUI() {
-            const { startedAt, lastRewardAt } = getPassiveTimes();
-            const active = startedAt > 0;
+            const { startedAt, lastRewardAt, endAt, hoursGranted, hoursPaid } = getPassiveTimes();
             const now = Date.now();
+            const active = startedAt > 0 && endAt > now;
+            const busy = Boolean(window._rivalAdsgramBusy);
             const button = document.getElementById('activate-passive-btn');
             const slot = document.getElementById('passive-slots-status');
             const pending = document.getElementById('passive-pending-status');
+            const remainingAds = Math.max(0, 12 - hoursGranted);
 
             if (slot) {
-                if (active) {
-                    const totalHours = Math.floor(Math.max(0, now - startedAt) / 3600000);
-                    slot.textContent = `Добыча активна · всего часов: ${totalHours}`;
-                } else {
-                    slot.textContent = 'Добыча ещё не запущена';
-                }
+                slot.textContent = `Просмотров: ${hoursGranted} / 12 · Начислено часов: ${hoursPaid} / ${hoursGranted}`;
             }
 
             if (pending) {
                 if (active) {
-                    const elapsedSinceReward = Math.max(0, now - lastRewardAt);
-                    const remaining = 3600000 - (elapsedSinceReward % 3600000);
-                    const minutes = Math.ceil(remaining / 60000);
+                    const remainingMs = Math.max(0, endAt - now);
+                    const minutes = Math.ceil(remainingMs / 60000);
                     const h = Math.floor(minutes / 60);
                     const m = minutes % 60;
-                    pending.textContent = `100 RIVAL за каждый час · следующее начисление через ${h} ч ${m} мин`;
+                    pending.textContent = `Фарм активен · осталось ${h} ч ${m} мин · +100 RIVAL за каждый полный час`;
+                } else if (hoursGranted > hoursPaid) {
+                    pending.textContent = 'Ожидается начисление оставшихся часов фарма.';
                 } else {
-                    pending.textContent = 'Нажми кнопку, чтобы запустить добычу.';
+                    pending.textContent = 'Посмотри рекламу — получишь +1 час фарма. Можно добавить до 12 часов.';
                 }
             }
 
             if (button) {
-                button.disabled = active || Boolean(window._rivalMonetagBusy);
-                button.textContent = active
-                    ? 'ДОБЫЧА УЖЕ ИДЁТ'
-                    : (window._rivalMonetagBusy ? 'ЗАГРУЗКА РЕКЛАМЫ…' : 'НАЧАТЬ ДОБЫЧУ');
+                const limitReached = hoursGranted >= 12 && (active || hoursPaid < hoursGranted);
+                button.disabled = busy || limitReached;
+                button.textContent = busy ? 'ЗАГРУЗКА РЕКЛАМЫ…' :
+                    (limitReached ? 'ЛИМИТ 12 ЧАСОВ ДОСТИГНУТ' : 'СМОТРЕТЬ РЕКЛАМУ · +1 ЧАС');
                 button.style.opacity = button.disabled ? '0.6' : '1';
             }
         }
 
+        function getAdsgramController() {
+            if (adsgramController) return adsgramController;
+            if (!window.Adsgram || typeof window.Adsgram.init !== 'function') {
+                throw new Error('AdsGram SDK не загрузился');
+            }
+            adsgramController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID, debug: false });
+            return adsgramController;
+        }
+
         window.activatePassiveSlot = async function() {
-            const { startedAt } = getPassiveTimes();
-            if (startedAt > 0 || window._rivalMonetagBusy) {
+            // Сначала начисляем уже завершённые часы, чтобы новый цикл не затёр старую награду.
+            await processPassiveIncome();
+            const { startedAt, endAt, hoursGranted, hoursPaid } = getPassiveTimes();
+            const now = Date.now();
+            const sessionActive = startedAt > 0 && endAt > now;
+            const sessionNotFinished = startedAt > 0 && hoursPaid < hoursGranted;
+
+            if (window._rivalAdsgramBusy || hoursGranted >= 12 && (sessionActive || sessionNotFinished)) {
                 updatePassiveUI();
                 return;
             }
 
-            if (typeof window.show_11997011 !== 'function') {
-                alert('Реклама пока не загрузилась. Попробуй ещё раз.');
-                return;
-            }
-
-            window._rivalMonetagBusy = true;
+            window._rivalAdsgramBusy = true;
             updatePassiveUI();
 
             try {
-                await window.show_11997011();
+                const controller = getAdsgramController();
+                const result = await controller.show();
+                if (result && result.done === false) {
+                    throw new Error('Реклама не была досмотрена');
+                }
 
-                const now = Date.now();
-                state.passiveStartedAt = now;
-                state.passiveLastRewardAt = now;
-                // Сбрасываем поля старой версии с выбором длительности.
-                state.passiveRunHours = 0;
-                state.passiveRunStartedAt = 0;
+                const completedAt = Date.now();
+                const stillActive = Number(state.passiveEndAt) > completedAt;
+                const currentGranted = stillActive ? Math.max(0, Number(state.passiveHoursGranted) || 0) : 0;
+                const currentPaid = stillActive ? Math.max(0, Number(state.passiveHoursPaid) || 0) : 0;
+
+                if (currentGranted >= 12) {
+                    alert('Лимит в 12 часов фарма уже достигнут. Дождись завершения текущего цикла.');
+                    return;
+                }
+
+                if (!stillActive) {
+                    state.passiveStartedAt = completedAt;
+                    state.passiveLastRewardAt = completedAt;
+                    state.passiveHoursGranted = 1;
+                    state.passiveHoursPaid = 0;
+                    state.passiveEndAt = completedAt + 3600000;
+                } else {
+                    state.passiveHoursGranted = currentGranted + 1;
+                    state.passiveHoursPaid = currentPaid;
+                    state.passiveEndAt = Number(state.passiveEndAt) + 3600000;
+                }
 
                 await saveUserData();
                 updatePassiveUI();
-                alert('Добыча запущена! За каждый полный час будет начисляться 100 RIVAL без ограничения по времени.');
+                alert('Готово! Добавлен 1 час фарма. За каждый полный час начисляется 100 RIVAL.');
             } catch (error) {
-                console.warn('Monetag ad did not complete:', error);
-                alert('Реклама сейчас недоступна или не была завершена. Добыча не запущена.');
+                console.warn('AdsGram rewarded ad was not completed:', error);
+                alert('Реклама не завершена или сейчас недоступна. Час фарма не добавлен.');
             } finally {
-                window._rivalMonetagBusy = false;
+                window._rivalAdsgramBusy = false;
                 updatePassiveUI();
             }
         };
 
         async function processPassiveIncome() {
-            const { startedAt, lastRewardAt } = getPassiveTimes();
-            if (!startedAt || !lastRewardAt) return;
+            const { startedAt, lastRewardAt, endAt, hoursGranted, hoursPaid } = getPassiveTimes();
+            if (!startedAt || !lastRewardAt || !endAt || hoursGranted <= hoursPaid) return;
 
             const now = Date.now();
-            const completedHours = Math.floor(Math.max(0, now - lastRewardAt) / 3600000);
-            if (completedHours < 1) return;
+            const effectiveNow = Math.min(now, endAt);
+            const elapsedFullHours = Math.floor(Math.max(0, effectiveNow - lastRewardAt) / 3600000);
+            const payableHours = Math.min(elapsedFullHours, hoursGranted - hoursPaid);
+            if (payableHours < 1) {
+                if (now >= endAt && hoursPaid >= hoursGranted) resetPassiveSession();
+                return;
+            }
 
-            state.balance = (Number(state.balance) || 0) + completedHours * 100;
-            state.passiveLastRewardAt = lastRewardAt + completedHours * 3600000;
+            state.balance = (Number(state.balance) || 0) + payableHours * 100;
+            state.passiveHoursPaid = hoursPaid + payableHours;
+            state.passiveLastRewardAt = lastRewardAt + payableHours * 3600000;
+
+            if (state.passiveHoursPaid >= hoursGranted && now >= endAt) {
+                resetPassiveSession();
+            }
 
             await saveUserData();
             updateUI();
             updatePassiveUI();
-            alert(`Пассивный доход: начислено ${completedHours * 100} RIVAL за ${completedHours} ч.`);
+            alert(`Пассивный доход: начислено ${payableHours * 100} RIVAL за ${payableHours} ч.`);
+        }
+
+        function resetPassiveSession() {
+            state.passiveStartedAt = 0;
+            state.passiveLastRewardAt = 0;
+            state.passiveEndAt = 0;
+            state.passiveHoursGranted = 0;
+            state.passiveHoursPaid = 0;
         }
 
         setInterval(async () => {
