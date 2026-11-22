@@ -1,1015 +1,2517 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>RivalCoin</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>RivalCoin Esports Arena — RVC</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070913;
+      --accent-cyan: #22d3ee;
+      --accent-purple: #a855f7;
+      --accent-pink: #ec4899;
+      --accent-gold: #fbbf24;
+    }
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --accent-gold: #f59e0b;
-            --text-main: #ffffff;
-            --text-sub: #94a3b8;
-        }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #050711;
+      color: #f8fafc;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow-x: hidden;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
+    /* Космический киберспортивный фон с туманностями и сеткой */
+    .space-backdrop {
+      background:
+        radial-gradient(circle at 18% 16%, rgba(168, 85, 247, 0.26), transparent 44%),
+        radial-gradient(circle at 84% 22%, rgba(34, 211, 238, 0.22), transparent 46%),
+        radial-gradient(circle at 52% 84%, rgba(236, 72, 153, 0.18), transparent 52%),
+        linear-gradient(180deg, #070a17 0%, #0c1026 55%, #060813 100%);
+      position: relative;
+    }
 
-        body {
-            background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 70%);
-            color: var(--text-main);
-            height: 100vh;
-            height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden;
-        }
+    .space-grid {
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(circle at 50% 45%, black 35%, transparent 85%);
+    }
 
-        .header {
-            padding: 20px 15px 10px;
-            text-align: center;
-        }
+    /* Стеклянные панели TMA */
+    .glass-card {
+      background: rgba(17, 24, 48, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
 
-        .brand-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--accent-gold);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
+    .glass-pill {
+      background: rgba(15, 23, 42, 0.76);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
 
-        .balance-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 5px;
-        }
+    /* Анимация парения монеты RVC */
+    @keyframes floatCore {
+      0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-9px) rotate(1.5deg);
+      }
+    }
 
-        .coin-icon-small {
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 20px;
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
-            border: 2px solid #fef08a;
-        }
+    @keyframes slowSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
-        .balance-value {
-            font-size: 38px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-        }
+    @keyframes reverseSpin {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
 
-        .tab-content {
-            flex: 1;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 15px;
-            overflow-y: auto;
-            overscroll-behavior: contain;
-        }
+    @keyframes pulseGlow {
+      0%, 100% {
+        opacity: 0.55;
+        transform: scale(0.96);
+      }
+      50% {
+        opacity: 0.92;
+        transform: scale(1.06);
+      }
+    }
 
-        .tab-content.active {
-            display: flex;
-        }
+    .animate-float-core {
+      animation: floatCore 3.6s ease-in-out infinite;
+    }
 
-        .tapper-area {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-        }
+    .animate-ring-spin {
+      animation: slowSpin 18s linear infinite;
+    }
 
-        .big-coin-btn {
-            width: min(250px, 65vw);
-            height: min(250px, 65vw);
-            border-radius: 50%;
-            background: radial-gradient(circle, #fbbf24 0%, #d97706 70%, #78350f 100%);
-            border: 8px solid #fef08a;
-            box-shadow: 0 0 50px rgba(245, 158, 11, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.05s ease;
-            margin: 20px 0;
-            position: relative;
-            touch-action: manipulation;
-        }
+    .animate-ring-reverse {
+      animation: reverseSpin 12s linear infinite;
+    }
 
-        .big-coin-btn:active {
-            transform: scale(0.94);
-        }
+    .animate-pulse-glow {
+      animation: pulseGlow 2.8s ease-in-out infinite;
+    }
 
-        .big-coin-symbol {
-            font-size: min(90px, 22vw);
-            font-weight: 900;
-            color: #fff;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.4);
-        }
+    /* Всплывающие числа при тапе */
+    @keyframes floatUpNumber {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -20%) scale(0.75);
+      }
+      20% {
+        opacity: 1;
+        transform: translate(-50%, -55%) scale(1.14);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -170%) scale(0.92);
+      }
+    }
 
-        .energy-box {
-            width: 80%;
-            max-width: 300px;
-            margin-top: 15px;
-        }
+    @keyframes critPopNumber {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -25%) scale(0.6) rotate(-6deg);
+      }
+      22% {
+        opacity: 1;
+        transform: translate(-50%, -70%) scale(1.38) rotate(4deg);
+      }
+      50% {
+        transform: translate(-50%, -108%) scale(1.16) rotate(-2deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -200%) scale(1) rotate(0deg);
+      }
+    }
 
-        .energy-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            color: var(--text-sub);
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
+    .floating-num {
+      position: fixed;
+      pointer-events: none;
+      z-index: 65;
+      font-weight: 900;
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
+      animation: floatUpNumber 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      will-change: transform, opacity;
+    }
 
-        .energy-bar-bg {
-            width: 100%;
-            height: 12px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.15);
-        }
+    .floating-crit {
+      position: fixed;
+      pointer-events: none;
+      z-index: 70;
+      font-weight: 900;
+      text-shadow: 0 0 22px rgba(251, 191, 36, 0.9), 0 6px 20px rgba(236, 72, 153, 0.75);
+      animation: critPopNumber 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      will-change: transform, opacity;
+    }
 
-        .energy-bar-fill {
-            height: 100%;
-            width: 100%;
-            background: linear-gradient(90deg, #f59e0b, #3b82f6);
-            border-radius: 10px;
-            transition: width 0.2s ease;
-        }
+    /* Анимация тряски сундука */
+    @keyframes chestShake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      20% { transform: rotate(-10deg) scale(1.06); }
+      40% { transform: rotate(10deg) scale(1.08); }
+      60% { transform: rotate(-8deg) scale(1.06); }
+      80% { transform: rotate(8deg) scale(1.04); }
+    }
 
-        .tap-pop {
-            position: absolute;
-            color: #ffffff;
-            font-size: 32px;
-            font-weight: 900;
-            pointer-events: none;
-            animation: popUp 0.8s ease-out forwards;
-            text-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
-            z-index: 100;
-        }
+    .chest-shake {
+      animation: chestShake 0.65s ease-in-out infinite;
+    }
 
-        @keyframes popUp {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-100px) scale(1.3); }
-        }
+    /* Плавный переход вкладок */
+    @keyframes tabEnter {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.99);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
 
-        .card-list {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+    .tab-enter {
+      animation: tabEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
 
-        .card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
+    /* Скрытие скроллбара для чистоты TMA */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
 
-        .card-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            min-width: 0;
-        }
+    /* Прогресс-бар с блеском */
+    .progress-shine {
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-shine::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+      transform: translateX(-100%);
+      animation: shimmerBar 2.6s infinite;
+    }
+    @keyframes shimmerBar {
+      100% { transform: translateX(100%); }
+    }
+  
+    .legacy-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.08)}
+    .legacy-row:first-of-type{border-top:0}.legacy-row b{display:block;font-size:12px;color:#f8fafc}.legacy-row small{display:block;font-size:10px;color:#94a3b8;margin-top:3px}.legacy-row.muted{opacity:.55}
+    .legacy-btn{border:1px solid rgba(34,211,238,.35);background:linear-gradient(120deg,rgba(8,145,178,.32),rgba(126,34,206,.35));color:#e0faff;border-radius:12px;padding:9px 12px;font-size:10px;font-weight:900;letter-spacing:.04em;white-space:nowrap;box-shadow:0 5px 18px rgba(34,211,238,.08)}
+    .legacy-btn:disabled{opacity:.45}.legacy-btn:active{transform:scale(.97)}
 
-        .card-icon {
-            font-size: 32px;
-            width: 50px;
-            height: 50px;
-            flex-shrink: 0;
-            background: rgba(255,255,255,0.08);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .card-sub {
-            font-size: 12px;
-            color: var(--text-sub);
-            margin-top: 3px;
-            overflow-wrap: anywhere;
-        }
-
-        .action-btn {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #fff;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 13px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-            flex-shrink: 0;
-        }
-
-        .action-btn:active {
-            transform: scale(0.95);
-        }
-
-        .action-btn:disabled {
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        .nav-bar {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(15px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 2px 16px;
-            padding-bottom: max(16px, env(safe-area-inset-bottom));
-            flex-shrink: 0;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-sub);
-            font-size: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 16.2%;
-            transition: color 0.2s;
-        }
-
-        .nav-item.active {
-            color: var(--accent-gold);
-        }
-
-        .nav-icon {
-            font-size: 22px;
-        }
-
-        select {
-            max-width: 100%;
-        }
-
-        @media (max-height: 650px) {
-            .header {
-                padding-top: 10px;
-            }
-
-            .balance-value {
-                font-size: 30px;
-            }
-
-            .big-coin-btn {
-                margin: 10px 0;
-            }
-
-            .tab-content {
-                padding: 8px;
-            }
-
-            .card {
-                padding: 11px;
-            }
-
-            .nav-bar {
-                padding-top: 6px;
-            }
-        }
-    </style>
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 </head>
-<body>
+<body class="flex justify-center items-stretch min-h-screen bg-[#04060e]">
 
-    <div class="header">
-        <div class="brand-title">RIVAL ECOSYSTEM</div>
-        <div class="balance-container">
-            <div class="coin-icon-small">R</div>
-            <div class="balance-value" id="balance">0</div>
-        </div>
+  <!-- Контейнер приложения в стиле Telegram Mini App -->
+  <div id="tma-app" class="space-backdrop w-full max-w-[460px] min-h-screen sm:min-h-[96vh] sm:my-auto sm:rounded-[34px] sm:border sm:border-white/10 sm:shadow-[0_25px_90px_rgba(0,0,0,0.85)] relative flex flex-col justify-between overflow-hidden">
+
+    <!-- Декоративная сетка на фоне -->
+    <div class="space-grid pointer-events-none fixed sm:absolute inset-0 z-0"></div>
+
+    <!-- Кастомный тост-уведомление -->
+    <div id="toast-container" class="fixed sm:absolute top-16 left-1/2 -translate-x-1/2 z-[90] w-[90%] max-w-[380px] pointer-events-none flex flex-col gap-2 items-center"></div>
+
+    <!-- Модальное окно сброса прогресса -->
+    
+
+    <!-- Модальное окно награды из сундука -->
+    <div id="chest-reward-modal" class="hidden fixed sm:absolute inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-5">
+      <div class="glass-card rounded-3xl p-6 w-full max-w-[360px] text-center border border-amber-400/40 relative overflow-hidden">
+        <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-44 h-44 bg-amber-400/20 blur-3xl pointer-events-none"></div>
+        <div id="chest-reward-icon" class="text-5xl mb-3 drop-shadow-[0_0_20px_rgba(251,191,36,0.6)]">🎁</div>
+        <div class="text-[11px] uppercase tracking-widest font-extrabold text-amber-300 mb-1">RivalCoin Дроп</div>
+        <h3 id="chest-reward-title" class="text-xl font-black text-white mb-2">Супер-бонус!</h3>
+        <p id="chest-reward-desc" class="text-xs text-slate-200 leading-relaxed mb-5"></p>
+        <button id="close-chest-modal-btn" class="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/30 active:scale-95 transition">
+          Забрать RVC!
+        </button>
+      </div>
     </div>
 
-    <!-- RivalCoin -->
-    <div class="tab-content active" id="tab-tapper">
-        <div class="tapper-area">
-            <div class="big-coin-btn" id="coin-btn">
-                <span class="big-coin-symbol">R</span>
-            </div>
-
-            <div class="energy-box">
-                <div class="energy-info">
-                    <span>⚡ Энергия</span>
-                    <span id="energy-text">1000 / 1000</span>
-                </div>
-                <div class="energy-bar-bg">
-                    <div class="energy-bar-fill" id="energy-fill"></div>
-                </div>
-            </div>
+    <!-- Модальное окно мини-игры: Reaction Aim -->
+    <div id="aim-game-modal" class="hidden fixed sm:absolute inset-0 z-[100] bg-black/82 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="glass-card rounded-3xl p-4 w-full max-w-[390px] border border-cyan-400/40">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h3 class="text-sm font-black text-white">🎯 Reaction Aim — Турнирный прицел</h3>
+            <p class="text-[11px] text-slate-300">Попадай по мишеням за 12 сек! Каждое попадание = +15 RVC</p>
+          </div>
+          <button id="close-aim-modal-btn" type="button" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-black text-slate-200">✕</button>
         </div>
+
+        <div class="flex items-center justify-between text-xs font-extrabold mb-2 px-2 py-1.5 rounded-xl bg-slate-950/70 border border-white/10">
+          <span class="text-cyan-300">⏱️ Время: <span id="aim-time-left">12.0</span>с</span>
+          <span class="text-amber-300">🎯 Попаданий: <span id="aim-hits-count">0</span></span>
+          <span class="text-emerald-300">🏆 Рекорд: <span id="aim-best-count">0</span></span>
+        </div>
+
+        <div id="aim-arena" class="relative w-full h-56 rounded-2xl bg-slate-950/90 border border-cyan-400/25 overflow-hidden flex items-center justify-center">
+          <button id="aim-start-btn" type="button" class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition">
+            Старт тренировки
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Игры -->
-    <div class="tab-content" id="tab-games">
-        <div class="card-list">
-            <div class="card">
-                <div class="card-left">
-                    <div class="card-icon">🏃</div>
-                    <div>
-                        <div class="card-title">Subway Runner 3D</div>
-                        <div class="card-sub">Зарабатывай RIVAL в беге!</div>
-                    </div>
-                </div>
-                <button class="action-btn" onclick="launchGame('https://tanya1232.github.io/subway-runner-3d/')">ИГРАТЬ</button>
-            </div>
-
-            <div class="card">
-                <div class="card-left">
-                    <div class="card-icon">🎯</div>
-                    <div>
-                        <div class="card-title">Strike Arena 3D</div>
-                        <div class="card-sub">Играй и зарабатывай RIVAL!</div>
-                    </div>
-                </div>
-                <button class="action-btn" onclick="launchGame('https://tanya1232.github.io/strike-arena-3d/')">ИГРАТЬ</button>
-            </div>
-
-            <div class="card" style="opacity:0.6;">
-                <div class="card-left">
-                    <div class="card-icon">🚗</div>
-                    <div>
-                        <div class="card-title">Rival Racing 3D</div>
-                        <div class="card-sub">Скоро в экосистеме...</div>
-                    </div>
-                </div>
-                <button class="action-btn" style="background:#475569;" disabled>LOCK</button>
-            </div>
+    <!-- Модальное окно мини-игры: Card Flip -->
+    <div id="cards-game-modal" class="hidden fixed sm:absolute inset-0 z-[100] bg-black/82 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="glass-card rounded-3xl p-4 w-full max-w-[390px] border border-fuchsia-400/40">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h3 class="text-sm font-black text-white">🃏 Card Flip — Сейф кибер-карт</h3>
+            <p class="text-[11px] text-slate-300">Открой 2 карты из 6: найди пару RVC и забери джекпот!</p>
+          </div>
+          <button id="close-cards-modal-btn" type="button" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-black text-slate-200">✕</button>
         </div>
+
+        <div id="cards-status-bar" class="text-xs font-bold text-amber-300 text-center py-1.5 px-2 rounded-xl bg-slate-950/70 border border-white/10 mb-3">
+          Выбери карту (осталось попыток: <span id="cards-picks-left">2</span>)
+        </div>
+
+        <div id="cards-grid" class="grid grid-cols-3 gap-2.5 mb-3"></div>
+
+        <button id="cards-replay-btn" type="button" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-black text-xs active:scale-95 transition">
+          Перетасовать карты
+        </button>
+      </div>
     </div>
 
-    <!-- Прокачка -->
-    <div class="tab-content" id="tab-boosts">
-        <div class="card-list">
-            <div class="card">
-                <div class="card-left">
-                    <div class="card-icon">👆</div>
-                    <div>
-                        <div class="card-title">Мульти-Тап</div>
-                        <div class="card-sub" id="multitap-sub">+1 за тап | Цена: 100</div>
-                    </div>
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ (HEADER) -->
+    <header class="relative z-20 px-4 pt-3.5 pb-2.5">
+      <div class="flex items-center justify-between gap-2 mb-2.5">
+        <!-- Профиль и уровень -->
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+          <div class="relative shrink-0">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 p-[2px] shadow-lg shadow-purple-500/25">
+              <div class="w-full h-full rounded-[14px] bg-slate-950 flex items-center justify-center text-xl">
+                🎮
+              </div>
+            </div>
+            <span id="header-level-badge" class="absolute -bottom-1.5 -right-1.5 px-1.5 py-0.5 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 text-[10px] font-black text-slate-950 shadow">
+              LVL 1
+            </span>
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5">
+              <span id="player-rank-title" class="text-sm font-extrabold text-white truncate">Rival Rookie</span>
+              <span class="px-1.5 py-0.5 text-[9px] font-black uppercase rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/30">
+                RVC ARENA
+              </span>
+            </div>
+            <!-- Прогресс до следующего уровня -->
+            <div class="mt-1">
+              <div class="flex justify-between text-[10px] text-slate-400 font-semibold mb-0.5">
+                <span id="xp-label">0 / 100 XP</span>
+                <span id="passive-income-label" class="text-emerald-400">+0 RVC/сек</span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-slate-800/90 overflow-hidden border border-white/5">
+                <div id="xp-bar-fill" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-fuchsia-500 progress-shine transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Кнопки управления звуком и сбросом -->
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button id="sound-toggle-btn" aria-label="Переключить звук" class="w-10 h-10 rounded-2xl glass-pill flex items-center justify-center text-lg hover:bg-white/10 active:scale-90 transition">
+            🔊
+          </button>
+        </div>
+      </div>
+
+      <!-- Счетчик монет RVC и активные бусты -->
+      <div class="glass-card rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-300 via-yellow-400 to-orange-500 flex items-center justify-center text-sm font-black text-slate-950 shadow-md shadow-amber-500/30 shrink-0">
+            R
+          </div>
+          <div class="min-w-0">
+            <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Баланс RivalCoin (RVC)</div>
+            <div class="flex items-baseline gap-1.5">
+              <span id="coins-display" class="text-xl sm:text-2xl font-black tracking-tight text-white tabular-nums truncate">0</span>
+              <span class="text-xs font-extrabold text-amber-300">RVC</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-end shrink-0">
+          <span id="per-tap-badge" class="px-2 py-0.5 rounded-lg bg-purple-500/20 border border-purple-400/30 text-[11px] font-extrabold text-purple-200">
+            +1 RVC за тап
+          </span>
+          <span id="crit-chance-badge" class="text-[10px] text-amber-300/90 font-semibold mt-0.5">
+            Крит x5: 10%
+          </span>
+        </div>
+      </div>
+
+      <!-- Баннер активного Турбо-крана / Множителя -->
+      <div id="active-boosts-banner" class="hidden mt-2 flex flex-wrap gap-1.5"></div>
+    </header>
+
+    <!-- ОСНОВНАЯ ОБЛАСТЬ КОНТЕНТА (ВКЛАДКИ) -->
+    <main id="main-content" class="relative z-10 flex-1 overflow-y-auto no-scrollbar px-4 pb-4 flex flex-col">
+
+      <!-- ВКЛАДКА 1: ТАП (МОНЕТА RVC С БУКВОЙ R) -->
+      <section id="view-tap" class="tab-enter flex-1 flex flex-col justify-between py-1">
+        <!-- Верхние мини-статы тапа -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="glass-pill rounded-2xl py-2 px-2">
+            <div class="text-[10px] text-slate-400 font-semibold">Всего тапов</div>
+            <div id="stat-total-taps" class="text-xs sm:text-sm font-extrabold text-cyan-300 tabular-nums">0</div>
+          </div>
+          <div class="glass-pill rounded-2xl py-2 px-2">
+            <div class="text-[10px] text-slate-400 font-semibold">Реликвий</div>
+            <div id="stat-artifacts-count" class="text-xs sm:text-sm font-extrabold text-fuchsia-300 tabular-nums">0 / 6</div>
+          </div>
+          <div class="glass-pill rounded-2xl py-2 px-2">
+            <div class="text-[10px] text-slate-400 font-semibold">Реген энергии</div>
+            <div id="stat-regen-rate" class="text-xs sm:text-sm font-extrabold text-emerald-300 tabular-nums">+1/с</div>
+          </div>
+        </div>
+
+        <!-- Центральная монета RivalCoin с буквой R -->
+        <div class="relative flex-1 min-h-[270px] flex items-center justify-center my-2">
+          <!-- Внешнее пульсирующее свечение -->
+          <div id="core-aura" class="w-60 h-60 sm:w-64 sm:h-64 rounded-full bg-gradient-to-tr from-amber-400/25 via-purple-500/25 to-cyan-400/25 blur-2xl animate-pulse-glow pointer-events-none absolute"></div>
+
+          <!-- Декоративные орбитальные кольца -->
+          <div class="w-56 h-56 sm:w-64 sm:h-64 rounded-full border border-dashed border-amber-300/30 animate-ring-spin pointer-events-none absolute"></div>
+          <div class="w-48 h-48 sm:w-52 sm:h-52 rounded-full border border-dotted border-cyan-400/35 animate-ring-reverse pointer-events-none absolute"></div>
+
+          <!-- Кнопка центральной монеты RVC -->
+          <button
+            id="tap-core-btn"
+            type="button"
+            aria-label="Тапать монету RivalCoin R"
+            class="relative z-10 w-48 h-48 sm:w-52 sm:h-52 rounded-full flex items-center justify-center focus:outline-none cursor-pointer transition-transform duration-100 ease-out"
+            style="touch-action: manipulation;"
+          >
+            <div id="core-inner-wrapper" class="w-full h-full rounded-full animate-float-core flex items-center justify-center transition-transform duration-100 ease-out">
+              <!-- Объёмная 3D-монета RivalCoin с крупной буквой R -->
+              <svg viewBox="0 0 220 220" class="w-full h-full drop-shadow-[0_0_28px_rgba(251,191,36,0.55)]">
+                <defs>
+                  <linearGradient id="coinRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#fef08a" />
+                    <stop offset="35%" stop-color="#f59e0b" />
+                    <stop offset="70%" stop-color="#d97706" />
+                    <stop offset="100%" stop-color="#fde68a" />
+                  </linearGradient>
+                  <radialGradient id="coinFaceGrad" cx="35%" cy="28%" r="72%">
+                    <stop offset="0%" stop-color="#3b2675" />
+                    <stop offset="48%" stop-color="#1e1542" />
+                    <stop offset="88%" stop-color="#0f0b24" />
+                    <stop offset="100%" stop-color="#090714" />
+                  </radialGradient>
+                  <linearGradient id="letterRGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff" />
+                    <stop offset="35%" stop-color="#fde047" />
+                    <stop offset="75%" stop-color="#fb923c" />
+                    <stop offset="100%" stop-color="#f472b6" />
+                  </linearGradient>
+                  <linearGradient id="shineSweep" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45" />
+                    <stop offset="50%" stop-color="#22d3ee" stop-opacity="0.08" />
+                    <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Тень-основание монеты для 3D-объёма -->
+                <circle cx="110" cy="116" r="98" fill="#78350f" opacity="0.75" />
+
+                <!-- Внешний золотой обод -->
+                <circle cx="110" cy="110" r="98" fill="url(#coinRimGrad)" stroke="#fef9c3" stroke-width="2" />
+
+                <!-- Насечки по краю монеты -->
+                <circle cx="110" cy="110" r="91" fill="none" stroke="#92400e" stroke-width="3" stroke-dasharray="4 6" opacity="0.65" />
+
+                <!-- Внутренний диск монеты -->
+                <circle cx="110" cy="110" r="84" fill="url(#coinFaceGrad)" stroke="url(#coinRimGrad)" stroke-width="3" />
+
+                <!-- Внутреннее декоративное кольцо -->
+                <circle cx="110" cy="110" r="73" fill="none" stroke="rgba(34, 211, 238, 0.35)" stroke-width="1.5" stroke-dasharray="8 5" />
+
+                <!-- Крупная стилизованная буква R в центре -->
+                <text
+                  x="110"
+                  y="134"
+                  text-anchor="middle"
+                  font-family="Inter, system-ui, sans-serif"
+                  font-weight="900"
+                  font-size="88"
+                  fill="url(#letterRGrad)"
+                  stroke="rgba(255,255,255,0.28)"
+                  stroke-width="1.5"
+                >R</text>
+
+                <!-- Подпись RVC снизу -->
+                <text
+                  x="110"
+                  y="162"
+                  text-anchor="middle"
+                  font-family="Inter, system-ui, sans-serif"
+                  font-weight="800"
+                  font-size="14"
+                  letter-spacing="4"
+                  fill="#67e8f9"
+                >RVC</text>
+
+                <!-- Диагональный блик -->
+                <path d="M 35 55 Q 110 25 185 85 L 170 105 Q 105 55 48 80 Z" fill="url(#shineSweep)" />
+              </svg>
+            </div>
+          </button>
+        </div>
+
+        <!-- Шкала энергии и кнопка быстрой заправки -->
+        <div class="glass-card rounded-2xl p-3.5">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-base">⚡</span>
+              <div>
+                <div class="text-xs font-extrabold text-white flex items-center gap-1.5">
+                  <span>Энергия</span>
+                  <span id="energy-text" class="text-cyan-300 tabular-nums">500 / 500</span>
                 </div>
-                <button class="action-btn" onclick="buyUpgrade('multitap')">БУСТ</button>
+              </div>
             </div>
 
-            <div class="card">
-                <div class="card-left">
-                    <div class="card-icon">🔋</div>
-                    <div>
-                        <div class="card-title">Макс. Энергия</div>
-                        <div class="card-sub" id="energy-sub">+500 к базе | Цена: 200</div>
-                    </div>
+            <button
+              id="quick-refill-btn"
+              type="button"
+              class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110 active:scale-95 text-[11px] font-extrabold text-white shadow-md shadow-cyan-500/25 flex items-center gap-1 transition"
+            >
+              <span>🔋 Заправка</span>
+              <span id="refill-cost-label" class="px-1.5 py-0.2 rounded bg-black/25 text-amber-200">100</span>
+            </button>
+          </div>
+
+          <div class="w-full h-3 rounded-full bg-slate-900/95 overflow-hidden border border-white/10 p-0.5">
+            <div id="energy-bar-fill" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 transition-all duration-150" style="width: 100%"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ВКЛАДКА 2: МИНИ-ИГРЫ И РАНГИ -->
+      <section id="view-hub" class="tab-enter hidden space-y-3.5 py-1">
+        <!-- Хаб киберспортивных мини-игр -->
+        <div class="glass-card rounded-2xl p-3.5">
+          <div class="flex items-center justify-between mb-2.5">
+            <div>
+              <h2 class="text-base font-black text-white">🕹️ Кибер-хаб мини-игр</h2>
+              <p class="text-xs text-slate-300">Зарабатывай RVC в режимах и подключай новые игры</p>
+            </div>
+            <span class="px-2 py-1 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-[10px] font-extrabold text-cyan-300">
+              2 ИГРЫ + СЛОТЫ
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2.5">
+            <!-- Игра 1: Reaction Aim -->
+            <div class="rounded-2xl p-3 bg-slate-900/75 border border-cyan-400/25 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/25 to-blue-600/25 border border-cyan-400/30 flex items-center justify-center text-2xl shrink-0">
+                  🎯
                 </div>
-                <button class="action-btn" onclick="buyUpgrade('energy')">БУСТ</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Задания и рефералы -->
-    <div class="tab-content" id="tab-referrals">
-        <div class="card-list">
-            <div class="card">
-                <div class="card-left">
-                    <div class="card-icon">👥</div>
-                    <div>
-                        <div class="card-title">Пригласи друга</div>
-                        <div class="card-sub">+10 000 RIVAL за нового игрока</div>
-                    </div>
+                <div class="min-w-0">
+                  <div class="text-xs font-black text-white">Reaction Aim</div>
+                  <p class="text-[11px] text-slate-300 truncate">Скоростная точность • +15 RVC за цель</p>
+                  <div class="text-[10px] font-bold text-cyan-300 mt-0.5">Рекорд: <span id="hub-aim-best">0</span> попаданий</div>
                 </div>
-                <button class="action-btn" onclick="copyReferralLink()">ПРИГЛАСИТЬ</button>
+              </div>
+              <button id="open-aim-game-btn" type="button" class="shrink-0 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-xs active:scale-95 transition">
+                Играть
+              </button>
             </div>
 
-            <div class="card">
-                <div class="card-left">
-                    <div class="card-icon">📣</div>
-                    <div>
-                        <div class="card-title">Вступить в группу</div>
-                        <div class="card-sub">+5 000 RIVAL один раз</div>
-                    </div>
+            <!-- Игра 2: Card Flip -->
+            <div class="rounded-2xl p-3 bg-slate-900/75 border border-fuchsia-400/25 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-fuchsia-500/25 to-purple-600/25 border border-fuchsia-400/30 flex items-center justify-center text-2xl shrink-0">
+                  🃏
                 </div>
-                <button class="action-btn" onclick="joinGroup()">ОТКРЫТЬ</button>
-            </div>
-
-            <div class="card" style="display:block;">
-                <div class="card-title">Твоя реферальная ссылка</div>
-                <div class="card-sub" id="referral-link-text" style="overflow-wrap:anywhere;margin:8px 0;">Загружаем ссылку...</div>
-                <div class="card-sub" id="referral-status"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Пассивный доход -->
-    <div class="tab-content" id="tab-passive">
-        <div class="card-list">
-            <div class="card" style="display:block;">
-                <div class="card-title">⛏️ Пассивный доход</div>
-                <div class="card-sub" style="margin-top:6px;">За каждый просмотр рекламы добавляется 1 час фарма. Каждый полный час приносит 100 RIVAL. Максимум — 12 часов за один цикл.</div>
-                <div class="card-sub" id="passive-slots-status" style="margin-top:12px;">Просмотров: 0 / 12 · Добыча ещё не запущена</div>
-                <div class="card-sub" id="passive-pending-status" style="margin-top:4px;">Посмотри рекламу — получишь +1 час фарма.</div>
-                <button class="action-btn" id="activate-passive-btn" style="width:100%;margin-top:12px;" onclick="activatePassiveSlot()">СМОТРЕТЬ РЕКЛАМУ · +1 ЧАС</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Кошелек -->
-    <div class="tab-content" id="tab-wallet">
-        <div class="card-list">
-            <div class="card" style="justify-content:center;text-align:center;padding:30px 15px;">
-                <div style="color:var(--text-sub);font-size:15px;line-height:1.5;">
-                    👛 Кошелек пока пуст.<br>Интеграция Web3 появится позже!
+                <div class="min-w-0">
+                  <div class="text-xs font-black text-white">Card Flip</div>
+                  <p class="text-[11px] text-slate-300 truncate">Угадай пару карт • приз до +120 RVC</p>
+                  <div class="text-[10px] font-bold text-fuchsia-300 mt-0.5">Побед: <span id="hub-cards-wins">0</span></div>
                 </div>
+              </div>
+              <button id="open-cards-game-btn" type="button" class="shrink-0 px-3.5 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-black text-xs active:scale-95 transition">
+                Открыть
+              </button>
             </div>
+
+            <!-- Слоты для будущих кибер-игр площадки -->
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" onclick="showToast('🚧 Режим «Clutch Duel» скоро появится в RivalCoin!', 'info')" class="rounded-2xl p-3 bg-slate-900/45 border border-dashed border-white/15 text-left hover:border-amber-400/35 transition active:scale-98">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-lg">⚔️</span>
+                  <span class="px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-300 text-[9px] font-black">SOON</span>
+                </div>
+                <div class="text-xs font-extrabold text-slate-200">Clutch Duel</div>
+                <div class="text-[10px] text-slate-400">Слот будущей игры</div>
+              </button>
+
+              <button type="button" onclick="showToast('🚧 Режим «Draft Predictor» скоро появится в RivalCoin!', 'info')" class="rounded-2xl p-3 bg-slate-900/45 border border-dashed border-white/15 text-left hover:border-amber-400/35 transition active:scale-98">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-lg">🏆</span>
+                  <span class="px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-300 text-[9px] font-black">SOON</span>
+                </div>
+                <div class="text-xs font-extrabold text-slate-200">Draft Predictor</div>
+                <div class="text-[10px] text-slate-400">Слот будущей игры</div>
+              </button>
+            </div>
+          </div>
         </div>
-    </div>
 
-    <!-- Нижнее меню -->
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('tapper', this)">
-            <div class="nav-icon">🪙</div>
-            <span>RivalCoin</span>
+        <!-- Система рангов «Кто лучше» -->
+        <div class="glass-card rounded-2xl p-3.5">
+          <div class="flex items-center justify-between mb-2.5">
+            <div>
+              <h3 class="text-sm font-black text-white">🏅 Ранги — Кто лучше</h3>
+              <p class="text-[11px] text-slate-300">Рейтинг игроков киберспортивной арены по RVC</p>
+            </div>
+            <span id="my-rank-pill" class="px-2.5 py-1 rounded-xl bg-amber-400/20 border border-amber-400/35 text-[11px] font-black text-amber-300">
+              #?
+            </span>
+          </div>
+
+          <div id="leaderboard-list" class="space-y-2"></div>
         </div>
-        <div class="nav-item" onclick="switchTab('games', this)">
-            <div class="nav-icon">🎮</div>
-            <span>Игры</span>
+      </section>
+
+      <!-- ВКЛАДКА 3: БУСТЫ -->
+      <section id="view-boosts" class="tab-enter hidden space-y-3 py-1">
+        <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-extrabold text-white">⚡ Улучшения и бусты</h2>
+            <p class="text-xs text-slate-300">Прокачивай мощь тапа, энергию и запускай Турбо-кран</p>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">Баланс</div>
+            <div id="boosts-balance-label" class="text-sm font-black text-amber-300 tabular-nums">0 RVC</div>
+          </div>
         </div>
-        <div class="nav-item" onclick="switchTab('boosts', this)">
-            <div class="nav-icon">⚡</div>
-            <span>Прокачка</span>
+
+        <!-- Временный буст: Турбо-кран x3 на 15 сек -->
+        <div class="glass-card rounded-2xl p-4 border border-fuchsia-400/35 relative overflow-hidden">
+          <div class="absolute -right-8 -top-8 w-28 h-28 bg-fuchsia-500/20 rounded-full blur-2xl pointer-events-none"></div>
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-fuchsia-500 via-purple-600 to-indigo-600 flex items-center justify-center text-2xl shadow-lg shadow-fuchsia-500/30 shrink-0">
+                🚀
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h3 class="text-sm font-black text-white">Турбо-кран</h3>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-400/30">
+                    x3 RVC • 15 СЕК
+                  </span>
+                </div>
+                <p class="text-xs text-slate-300 mt-0.5 leading-snug">
+                  Утраивает RVC за тап и отключает трату энергии на 15 секунд!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3.5 flex items-center justify-between gap-2">
+            <div id="turbo-status-text" class="text-xs font-bold text-emerald-300">
+              Готов к запуску
+            </div>
+            <button
+              id="activate-turbo-btn"
+              type="button"
+              class="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-500 hover:brightness-110 active:scale-95 text-xs font-black text-white shadow-lg shadow-purple-500/30 transition"
+            >
+              Запустить (250 RVC)
+            </button>
+          </div>
         </div>
-        <div class="nav-item" onclick="switchTab('referrals', this)">
-            <div class="nav-icon">👥</div>
-            <span>Задания</span>
+
+        <!-- Список постоянных прокачек -->
+        <div id="upgrades-list" class="space-y-2.5"></div>
+      </section>
+
+      <!-- ВКЛАДКА 4: НИШТЯКИ (СУНДУК + КОЛЛЕКЦИЯ РЕЛИКВИЙ) -->
+      <section id="view-perks" class="tab-enter hidden space-y-3.5 py-1">
+        <!-- Сундук наград -->
+        <div class="glass-card rounded-2xl p-4 border border-amber-400/35 relative overflow-hidden">
+          <div class="absolute -left-10 -bottom-10 w-36 h-36 bg-amber-400/15 rounded-full blur-2xl pointer-events-none"></div>
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3.5">
+              <div id="mystery-chest-icon" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400/25 via-orange-500/20 to-pink-500/20 border border-amber-300/35 flex items-center justify-center text-4xl shrink-0">
+                🎁
+              </div>
+              <div>
+                <div class="text-[10px] uppercase tracking-wider font-extrabold text-amber-300">Кейс наград</div>
+                <h3 class="text-base font-black text-white">Сундук RivalCoin</h3>
+                <p class="text-xs text-slate-300 mt-0.5 leading-snug">
+                  RVC монеты, рефил энергии, x2 множитель на 20с или редкая реликвия!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3.5 flex items-center justify-between gap-2">
+            <span id="chest-timer-label" class="text-xs font-bold text-emerald-300">
+              Сундук доступен!
+            </span>
+            <button
+              id="open-chest-btn"
+              type="button"
+              class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 hover:brightness-110 active:scale-95 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/30 transition"
+            >
+              Открыть сундук
+            </button>
+          </div>
         </div>
-        <div class="nav-item" onclick="switchTab('passive', this)">
-            <div class="nav-icon">⛏️</div>
-            <span>Доход</span>
+
+        <!-- Коллекция реликвий -->
+        <div class="glass-card rounded-2xl p-3.5">
+          <div class="flex items-center justify-between mb-2.5">
+            <div>
+              <h3 class="text-sm font-black text-white">💎 Коллекция артефактов и реликвий</h3>
+              <p class="text-[11px] text-slate-300">Дают пассивный доход (RVC/сек) или бонус к тапу</p>
+            </div>
+            <span id="collection-progress-badge" class="px-2.5 py-1 rounded-xl bg-fuchsia-500/20 border border-fuchsia-400/30 text-xs font-extrabold text-fuchsia-200">
+              0 / 6
+            </span>
+          </div>
+
+          <div id="artifacts-grid" class="grid grid-cols-1 gap-2.5"></div>
         </div>
-        <div class="nav-item" onclick="switchTab('wallet', this)">
-            <div class="nav-icon">👛</div>
-            <span>Кошелек</span>
+      </section>
+
+      <!-- ВКЛАДКА 5: КВЕСТЫ -->
+      <section id="view-quests" class="tab-enter hidden space-y-3 py-1">
+        <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-extrabold text-white">🎯 Турнирные квесты</h2>
+            <p class="text-xs text-slate-300">Выполняй задания и забирай награды в RVC</p>
+          </div>
+          <span id="quests-ready-badge" class="px-2.5 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-xs font-extrabold text-emerald-300">
+            0 готово
+          </span>
         </div>
-    </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import {
-            getFirestore, doc, getDoc, setDoc, runTransaction
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        <div id="quests-list" class="space-y-2.5"></div>
+      </section>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDfnuR07pt2IIWCScmI7H4aSy57XIHZpHg",
-            authDomain: "rivalcoin-738cc.firebaseapp.com",
-            projectId: "rivalcoin-738cc",
-            storageBucket: "rivalcoin-738cc.firebasestorage.app",
-            messagingSenderId: "53292984166",
-            appId: "1:53292984166:web:63d508b16bb8c04affcaa7"
-        };
+    
+      <!-- ВКЛАДКА 6: ПОЛНАЯ ЭКОСИСТЕМА ПРЕЖНЕЙ ВЕРСИИ -->
+      <section id="view-ecosystem" class="tab-enter hidden space-y-3 py-1">
+        <div class="glass-card rounded-2xl p-3.5">
+          <div class="flex items-center justify-between gap-2">
+            <div><h2 class="text-base font-extrabold text-white">🌐 Экосистема RivalCoin</h2><p class="text-xs text-slate-400 mt-1">Все прежние возможности сохранены в новом интерфейсе</p></div>
+            <span class="text-[10px] font-black text-cyan-200 px-2 py-1 rounded-lg bg-cyan-500/15 border border-cyan-400/20">LIVE</span>
+          </div>
+        </div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        // Telegram bot username used for referral deep links (without @).
-        const TELEGRAM_BOT_USERNAME = "RivalCoin_bot";
-        const ADSGRAM_BLOCK_ID = "59640";
-        let adsgramController = null;
+        <div class="glass-card rounded-2xl p-3.5 space-y-3">
+          <h3 class="text-sm font-extrabold text-white">🎮 Игры экосистемы</h3>
+          <div class="legacy-row"><div><b>🏃 Subway Runner 3D</b><small>Зарабатывай RIVAL в раннере</small></div><button class="legacy-btn" onclick="launchGame('https://tanya1232.github.io/subway-runner-3d/')">ИГРАТЬ</button></div>
+          <div class="legacy-row"><div><b>🎯 Strike Arena 3D</b><small>Играй и зарабатывай RIVAL</small></div><button class="legacy-btn" onclick="launchGame('https://tanya1232.github.io/strike-arena-3d/')">ИГРАТЬ</button></div>
+          <div class="legacy-row muted"><div><b>🚗 Rival Racing 3D</b><small>Скоро в экосистеме</small></div><button class="legacy-btn" disabled>СКОРО</button></div>
+        </div>
 
-        const tg = window.Telegram ? window.Telegram.WebApp : null;
+        <div class="glass-card rounded-2xl p-3.5 space-y-3">
+          <h3 class="text-sm font-extrabold text-white">⚡ Классические улучшения</h3>
+          <div class="legacy-row"><div><b>👆 Мульти-Тап</b><small id="legacy-multitap-sub">+1 за тап · Цена: 100</small></div><button class="legacy-btn" onclick="buyLegacyUpgrade('multitap')">УЛУЧШИТЬ</button></div>
+          <div class="legacy-row"><div><b>🔋 Максимум энергии</b><small id="legacy-energy-sub">+500 к базе · Цена: 200</small></div><button class="legacy-btn" onclick="buyLegacyUpgrade('energy')">УЛУЧШИТЬ</button></div>
+        </div>
 
-        if (tg) {
-            tg.ready();
-            tg.expand();
+        <div class="glass-card rounded-2xl p-3.5 space-y-3">
+          <h3 class="text-sm font-extrabold text-white">👥 Реферальная программа</h3>
+          <p class="text-xs text-slate-300">Пригласи друга — +10 000 RIVAL за нового игрока.</p>
+          <button class="legacy-btn w-full" onclick="copyReferralLink()">СКОПИРОВАТЬ ССЫЛКУ</button>
+          <div id="referral-link-text" class="break-all text-xs text-cyan-200"></div>
+          <div id="referral-status" class="text-xs text-slate-400"></div>
+          <div class="border-t border-white/10 pt-3 space-y-2">
+            <b class="text-sm">📣 Группа ProRivalArena</b>
+            <p class="text-xs text-slate-400">Разовая награда 5 000 RIVAL.</p>
+            <button class="legacy-btn w-full" onclick="joinGroup()">ОТКРЫТЬ ГРУППУ И ЗАБРАТЬ НАГРАДУ</button>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-3.5 space-y-3">
+          <h3 class="text-sm font-extrabold text-white">⛏️ Пассивный доход через AdsGram</h3>
+          <p class="text-xs text-slate-300">За каждый успешно просмотренный ролик добавляется 1 час фарма. Каждый полный час приносит 100 RIVAL. До 12 часов за цикл. Рекламу можно смотреть подряд.</p>
+          <div id="passive-slots-status" class="text-xs font-bold text-cyan-200">Просмотров: 0 / 12</div>
+          <div id="passive-pending-status" class="text-xs text-slate-400">Посмотри рекламу — получишь +1 час фарма.</div>
+          <button id="activate-passive-btn" class="legacy-btn w-full" onclick="activatePassiveSlot()">СМОТРЕТЬ РЕКЛАМУ · +1 ЧАС</button>
+        </div>
+
+        <div class="glass-card rounded-2xl p-3.5">
+          <h3 class="text-sm font-extrabold text-white">👛 Кошелёк</h3>
+          <p class="text-xs text-slate-400 mt-2">Web3-интеграция появится позже. Баланс RVC и весь игровой прогресс уже сохраняются в Firebase.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- НИЖНЯЯ НАВИГАЦИЯ В СТИЛЕ TELEGRAM MINI APP -->
+    <nav class="relative z-20 px-2.5 pb-3 pt-1.5 bg-slate-950/88 backdrop-blur-xl border-t border-white/10">
+      <div class="grid grid-cols-6 gap-1">
+        <button data-tab="tap" class="nav-tab-btn py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 bg-gradient-to-b from-cyan-500/25 to-purple-500/20 border border-cyan-400/40 text-white transition active:scale-95">
+          <span class="text-base leading-none">🪙</span>
+          <span class="text-[10px] font-extrabold">Тап</span>
+        </button>
+
+        <button data-tab="hub" class="nav-tab-btn py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent transition active:scale-95">
+          <span class="text-base leading-none">🕹️</span>
+          <span class="text-[10px] font-bold">Игры/Ранг</span>
+        </button>
+
+        <button data-tab="boosts" class="nav-tab-btn py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent transition active:scale-95">
+          <span class="text-base leading-none">⚡</span>
+          <span class="text-[10px] font-bold">Бусты</span>
+        </button>
+
+        <button data-tab="perks" class="nav-tab-btn relative py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent transition active:scale-95">
+          <span id="perks-dot" class="hidden w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-2.5 animate-ping"></span>
+          <span id="perks-dot-static" class="hidden w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-2.5"></span>
+          <span class="text-base leading-none">🎁</span>
+          <span class="text-[10px] font-bold">Награды</span>
+        </button>
+
+        <button data-tab="quests" class="nav-tab-btn relative py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent transition active:scale-95">
+          <span id="quests-badge-dot" class="hidden min-w-[15px] h-3.5 px-1 rounded-full bg-emerald-400 text-slate-950 text-[9px] font-black flex items-center justify-center absolute top-1 right-1.5">!</span>
+          <span class="text-base leading-none">🎯</span>
+          <span class="text-[10px] font-bold">Квесты</span>
+        </button>
+
+        <button data-tab="ecosystem" class="nav-tab-btn py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent transition active:scale-95">
+          <span class="text-base leading-none">🌐</span>
+          <span class="text-[10px] font-bold">Экосистема</span>
+        </button>
+      </div>
+    </nav>
+
+  </div>
+
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, runTransaction, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    /**
+     * =========================================================================
+     * RIVALCOIN (RVC) — TELEGRAM MINI APP ESPORTS HUB & CLICKER
+     * Базируется на первой версии Cosmic Tap TMA + монета R + мини-игры + ранги
+     * =========================================================================
+     */
+
+    const CHEST_COOLDOWN_MS = 60 * 1000;
+    const TELEGRAM_BOT_USERNAME = 'RivalCoin_bot';
+    const ADSGRAM_BLOCK_ID = '59640';
+    const GROUP_URL = 'https://t.me/ProRivalArena';
+    const tg = window.Telegram?.WebApp || null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const userId = tg?.initDataUnsafe?.user?.id || (() => { let id=localStorage.getItem('rival_demo_uid'); if(!id){id='demo_'+Math.floor(Math.random()*1000000);localStorage.setItem('rival_demo_uid',id);} return id; })();
+    const firebaseConfig = { apiKey:'AIzaSyDfnuR07pt2IIWCScmI7H4aSy57XIHZpHg', authDomain:'rivalcoin-738cc.firebaseapp.com', projectId:'rivalcoin-738cc', storageBucket:'rivalcoin-738cc.firebasestorage.app', messagingSenderId:'53292984166', appId:'1:53292984166:web:63d508b16bb8c04affcaa7' };
+
+    // Ранги игроков киберспортивной арены
+    const RANK_TIERS = [
+      { minCoins: 0, title: 'Rival Rookie', badge: '🥉' },
+      { minCoins: 500, title: 'Arena Striker', badge: '🥈' },
+      { minCoins: 2000, title: 'Cyber Vanguard', badge: '🥇' },
+      { minCoins: 6000, title: 'Pro Esportster', badge: '💎' },
+      { minCoins: 15000, title: 'RVC Grandmaster', badge: '👑' }
+    ];
+
+    // Соперники для таблицы «Кто лучше»
+    const RIVAL_PLAYERS = [
+      { name: 'VortexAim', team: 'NOVA', coins: 16800, avatar: '🦊' },
+      { name: 'KiraClutch', team: 'APEX', coins: 7400, avatar: '⚡' },
+      { name: 'ZeroPing', team: 'PULSE', coins: 2650, avatar: '🤖' },
+      { name: 'LunaFlick', team: 'ORBIT', coins: 820, avatar: '🌙' }
+    ];
+
+    // Каталог постоянных улучшений
+    const UPGRADE_DEFS = [
+      {
+        id: 'tapPower',
+        title: 'Сила тапа',
+        icon: '💥',
+        desc: 'Увеличивает базовый доход RVC за каждое нажатие',
+        baseCost: 25,
+        costMult: 1.52,
+        statLabel: (lvl) => `+${lvl} RVC к тапу`
+      },
+      {
+        id: 'energyCap',
+        title: 'Лимит энергии',
+        icon: '🔋',
+        desc: 'Расширяет максимальный запас энергии реактора',
+        baseCost: 40,
+        costMult: 1.48,
+        statLabel: (lvl) => `+${lvl * 150} макс. энергии`
+      },
+      {
+        id: 'energyRegen',
+        title: 'Регенерация',
+        icon: '🌊',
+        desc: 'Ускоряет автоматическое восстановление энергии в секунду',
+        baseCost: 60,
+        costMult: 1.55,
+        statLabel: (lvl) => `+${lvl} энерг./сек`
+      }
+    ];
+
+    // Каталог коллекционных артефактов и реликвий
+    const ARTIFACT_DEFS = [
+      {
+        id: 'rvc_prism',
+        name: 'Призма Арены',
+        icon: '🔮',
+        rarity: 'Редкий',
+        bonusText: '+3 RVC/сек',
+        passivePerSec: 3,
+        tapBonus: 0,
+        unlockCost: 300
+      },
+      {
+        id: 'cyber_glove',
+        name: 'Кибер-Перчатка',
+        icon: '🧤',
+        rarity: 'Редкий',
+        bonusText: '+2 RVC за тап',
+        passivePerSec: 0,
+        tapBonus: 2,
+        unlockCost: 450
+      },
+      {
+        id: 'aim_gyro',
+        name: 'Гироскоп Точности',
+        icon: '⚙️',
+        rarity: 'Эпический',
+        bonusText: '+8 RVC/сек',
+        passivePerSec: 8,
+        tapBonus: 0,
+        unlockCost: 900
+      },
+      {
+        id: 'chrono_shard',
+        name: 'Хроно-Осколок RVC',
+        icon: '⏳',
+        rarity: 'Эпический',
+        bonusText: '+5 за тап и +5/сек',
+        passivePerSec: 5,
+        tapBonus: 5,
+        unlockCost: 1400
+      },
+      {
+        id: 'quantum_core',
+        name: 'Квантовое Ядро',
+        icon: '⚛️',
+        rarity: 'Легендарный',
+        bonusText: '+20 RVC/сек',
+        passivePerSec: 20,
+        tapBonus: 0,
+        unlockCost: 2800
+      },
+      {
+        id: 'champion_crown',
+        name: 'Корона Чемпиона RVC',
+        icon: '👑',
+        rarity: 'Мифический',
+        bonusText: '+15 за тап и +25/сек',
+        passivePerSec: 25,
+        tapBonus: 15,
+        unlockCost: 5000
+      }
+    ];
+
+    // Каталог квестов
+    const QUEST_DEFS = [
+      {
+        id: 'q_taps_50',
+        title: 'Разминка на арене',
+        desc: 'Сделай 50 тапов по монете RVC',
+        type: 'taps',
+        target: 50,
+        rewardCoins: 120
+      },
+      {
+        id: 'q_taps_300',
+        title: 'Турбо-кликер RVC',
+        desc: 'Сделай 300 тапов по монете RVC',
+        type: 'taps',
+        target: 300,
+        rewardCoins: 550
+      },
+      {
+        id: 'q_upgrades_3',
+        title: 'Прокачка экипировки',
+        desc: 'Купи 3 любых уровня улучшений',
+        type: 'upgradesBought',
+        target: 3,
+        rewardCoins: 350
+      },
+      {
+        id: 'q_chests_2',
+        title: 'Охотник за дропом',
+        desc: 'Открой сундук RivalCoin 2 раза',
+        type: 'chestsOpened',
+        target: 2,
+        rewardCoins: 450
+      },
+      {
+        id: 'q_artifacts_2',
+        title: 'Коллекционер трофеев',
+        desc: 'Собери 2 реликвии в коллекции',
+        type: 'artifactsCount',
+        target: 2,
+        rewardCoins: 1000
+      }
+    ];
+
+    function getDefaultState() {
+      return {
+        coins: 0,
+        xp: 0,
+        level: 1,
+        energy: 1000,
+        maxEnergy: 1000,
+        baseTapPower: 1,
+        energyRegen: 3,
+        totalTaps: 0,
+        upgradesBought: 0,
+        chestsOpened: 0,
+        lastChestTime: 0,
+        aimBest: 0,
+        cardsWins: 0,
+        upgrades: {
+          tapPower: 1,
+          energyCap: 1,
+          energyRegen: 1
+        },
+        unlockedArtifacts: [],
+        claimedQuests: [],
+        turboUntil: 0,
+        turboCooldownUntil: 0,
+        x2Until: 0,
+        soundEnabled: true,
+        balance: 0,
+        tapValue: 1,
+        multitapCost: 100,
+        energyCost: 200,
+        username: tg?.initDataUnsafe?.user?.username || 'Player',
+        lastEnergyUpdate: Date.now(),
+        passiveStartedAt: 0,
+        passiveLastRewardAt: 0,
+        passiveHoursGranted: 0,
+        passiveHoursPaid: 0,
+        passiveEndAt: 0,
+        groupRewardClaimed: false,
+        referredBy: '',
+        referralProcessed: false
+      };
+    }
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+    const userDocRef = doc(db, 'users', String(userId));
+
+    let state = getDefaultState();
+    let currentTab = 'tap';
+    let firebaseReady = false;
+    let saveQueue = Promise.resolve();
+    let adsgramController = null;
+    let isAdsBusy = false;
+
+    function normalizeCloudState(cloud = {}) {
+      const def = getDefaultState();
+      const merged = { ...def, ...cloud };
+      merged.upgrades = { ...def.upgrades, ...(cloud.upgrades || {}) };
+      merged.unlockedArtifacts = Array.isArray(cloud.unlockedArtifacts) ? cloud.unlockedArtifacts : [];
+      merged.claimedQuests = Array.isArray(cloud.claimedQuests) ? cloud.claimedQuests : [];
+      // Единый баланс: новое поле coins и прежнее поле balance всегда синхронны.
+      const savedCoins = Number.isFinite(Number(cloud.coins)) ? Number(cloud.coins) : Number(cloud.balance) || 0;
+      merged.coins = Math.max(0, savedCoins);
+      merged.balance = merged.coins;
+      merged.maxEnergy = Math.max(1000, Number(cloud.maxEnergy) || 1000);
+      merged.energy = Math.max(0, Math.min(merged.maxEnergy, Number.isFinite(Number(cloud.energy)) ? Number(cloud.energy) : merged.maxEnergy));
+      merged.baseTapPower = Math.max(1, Number(cloud.baseTapPower) || Number(cloud.tapValue) || 1);
+      merged.tapValue = merged.baseTapPower;
+      merged.multitapCost = Math.max(100, Number(cloud.multitapCost) || 100);
+      merged.energyCost = Math.max(200, Number(cloud.energyCost) || 200);
+      merged.energyRegen = Math.max(3, Number(cloud.energyRegen) || 3);
+      merged.passiveHoursGranted = Math.max(0, Math.min(12, Number(cloud.passiveHoursGranted) || 0));
+      merged.passiveHoursPaid = Math.max(0, Number(cloud.passiveHoursPaid) || 0);
+      return merged;
+    }
+
+    async function loadState() {
+      try {
+        const snap = await getDoc(userDocRef);
+        let localGemini = null;
+        try { const rawLocal = localStorage.getItem('rivalcoin_rvc_tma_save_v1'); if (rawLocal) localGemini = JSON.parse(rawLocal); } catch (_) {}
+        if (snap.exists()) {
+          const cloud = snap.data();
+          if (localGemini && !cloud.geminiLocalImportedAt) {
+            const cloudBalance = Number.isFinite(Number(cloud.coins)) ? Number(cloud.coins) : Number(cloud.balance) || 0;
+            const importedCoins = Number.isFinite(Number(cloud.coins)) ? 0 : Math.max(0, Number(localGemini.coins) || 0);
+            const combined = { ...localGemini, ...cloud };
+            combined.coins = cloudBalance + importedCoins;
+            combined.maxEnergy = Math.max(Number(cloud.maxEnergy) || 1000, Number(localGemini.maxEnergy) || 1000, 1000);
+            combined.energy = Math.min(combined.maxEnergy, Math.max(Number(cloud.energy) || 0, Number(localGemini.energy) || 0));
+            combined.upgrades = { ...(localGemini.upgrades || {}), ...(cloud.upgrades || {}) };
+            combined.unlockedArtifacts = [...new Set([...(localGemini.unlockedArtifacts || []), ...(cloud.unlockedArtifacts || [])])];
+            combined.claimedQuests = [...new Set([...(localGemini.claimedQuests || []), ...(cloud.claimedQuests || [])])];
+            combined.geminiLocalImportedAt = Date.now();
+            state = normalizeCloudState(combined);
+          } else state = normalizeCloudState(cloud);
+        } else {
+          state = normalizeCloudState(localGemini || {});
+          state.lastEnergyUpdate = Date.now();
+          state.geminiLocalImportedAt = localGemini ? Date.now() : 0;
+          await setDoc(userDocRef, { ...state, coins: state.coins, balance: state.coins }, { merge: true });
+          await processReferral();
+        }
+        const now = Date.now();
+        const lastEnergy = Number(state.lastEnergyUpdate) || now;
+        const elapsed = Math.max(0, Math.floor((now - lastEnergy) / 1000));
+        state.energy = Math.min(state.maxEnergy, state.energy + elapsed * state.energyRegen);
+        state.lastEnergyUpdate = now;
+        firebaseReady = true;
+        await processPassiveIncome(false);
+        await saveState();
+        updateUI();
+        updateLegacyUI();
+        updateReferralUI();
+      } catch (err) {
+        console.error('Firebase load error:', err);
+        showToast('Не удалось загрузить Firebase. Проверь подключение.', 'error');
+      }
+    }
+
+    function saveState() {
+      if (!firebaseReady) return Promise.resolve();
+      state.coins = Math.max(0, Number(state.coins) || 0);
+      state.balance = state.coins;
+      state.tapValue = state.baseTapPower;
+      state.lastEnergyUpdate = Date.now();
+      const snapshot = { ...state, upgrades: { ...state.upgrades }, unlockedArtifacts: [...state.unlockedArtifacts], claimedQuests: [...state.claimedQuests] };
+      saveQueue = saveQueue.then(() => runTransaction(db, async (tx) => {
+        const snap = await tx.get(userDocRef);
+        const cloud = snap.exists() ? snap.data() : {};
+        const safeMax = Math.max(1000, Number(cloud.maxEnergy) || 1000, Number(snapshot.maxEnergy) || 1000);
+        const safeEnergy = Math.max(0, Math.min(safeMax, Number(snapshot.energy) || 0));
+        tx.set(userDocRef, { ...snapshot, coins: snapshot.coins, balance: snapshot.coins, maxEnergy: safeMax, energy: safeEnergy }, { merge: true });
+        state.maxEnergy = safeMax;
+        state.energy = safeEnergy;
+      })).catch((err) => { console.error('Firebase save error:', err); showToast('Ошибка сохранения Firebase', 'error'); });
+      return saveQueue;
+    }
+
+    async function processReferral() {
+      const params = new URLSearchParams(location.search);
+      const referrerId = params.get('ref') || tg?.initDataUnsafe?.start_param || '';
+      if (!referrerId || String(referrerId) === String(userId)) return;
+      const referrerRef = doc(db, 'users', String(referrerId));
+      try {
+        await runTransaction(db, async (tx) => {
+          const newSnap = await tx.get(userDocRef);
+          if (!newSnap.exists()) return;
+          const mine = newSnap.data();
+          if (mine.referredBy || mine.referralProcessed) return;
+          const refSnap = await tx.get(referrerRef);
+          if (!refSnap.exists()) return;
+          const ref = refSnap.data();
+          const newBalance = (Number(ref.coins) || Number(ref.balance) || 0) + 10000;
+          tx.set(referrerRef, { coins: newBalance, balance: newBalance }, { merge: true });
+          tx.set(userDocRef, { referredBy: String(referrerId), referralProcessed: true }, { merge: true });
+        });
+      } catch (err) { console.error('Referral processing error:', err); }
+    }
+
+    function makeReferralLink() { return `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=${encodeURIComponent(String(userId))}`; }
+    function updateReferralUI() { const el = document.getElementById('referral-link-text'); if (el) el.textContent = makeReferralLink(); }
+    window.copyReferralLink = async function() {
+      const link = makeReferralLink();
+      try { await navigator.clipboard.writeText(link); showToast('Реферальная ссылка скопирована', 'success'); }
+      catch (_) { showToast(link, 'info'); }
+    };
+    window.joinGroup = async function() {
+      if (!state.groupRewardClaimed) {
+        state.groupRewardClaimed = true;
+        state.coins += 5000; state.balance = state.coins;
+        await saveState(); updateUI(); updateLegacyUI();
+        showToast('Начислено 5 000 RIVAL за вступление в группу', 'success');
+      } else { showToast('Разовая награда уже получена', 'info'); }
+      if (tg?.openTelegramLink) tg.openTelegramLink(GROUP_URL); else window.open(GROUP_URL, '_blank', 'noopener');
+    };
+
+    function getPassiveTimes() {
+      return { startedAt:Number(state.passiveStartedAt)||0, lastRewardAt:Number(state.passiveLastRewardAt)||0, endAt:Number(state.passiveEndAt)||0, hoursGranted:Math.max(0,Math.min(12,Number(state.passiveHoursGranted)||0)), hoursPaid:Math.max(0,Number(state.passiveHoursPaid)||0) };
+    }
+    function updatePassiveUI() {
+      const p=getPassiveTimes(), now=Date.now(), active=p.startedAt>0&&p.endAt>now;
+      const slot=document.getElementById('passive-slots-status'), pending=document.getElementById('passive-pending-status'), btn=document.getElementById('activate-passive-btn');
+      if(slot) slot.textContent=`Просмотров: ${p.hoursGranted} / 12 · Начислено часов: ${p.hoursPaid} / ${p.hoursGranted}`;
+      if(pending) pending.textContent=active?`Фарм активен · осталось ${Math.floor((p.endAt-now)/3600000)} ч ${Math.ceil(((p.endAt-now)%3600000)/60000)} мин · +100 RIVAL за полный час`:p.hoursGranted>p.hoursPaid?'Ожидается начисление оставшихся часов фарма.':'Посмотри рекламу — получишь +1 час фарма. Можно добавить до 12 часов.';
+      if(btn){ const limit=p.hoursGranted>=12&&(active||p.hoursPaid<p.hoursGranted); btn.disabled=isAdsBusy||limit; btn.textContent=isAdsBusy?'ЗАГРУЗКА РЕКЛАМЫ…':limit?'ЛИМИТ 12 ЧАСОВ ДОСТИГНУТ':'СМОТРЕТЬ РЕКЛАМУ · +1 ЧАС'; }
+    }
+    function getAdsgramController() {
+      if(adsgramController) return adsgramController;
+      if(!window.Adsgram?.init) throw new Error('AdsGram SDK не загрузился');
+      adsgramController=window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID, debug:false }); return adsgramController;
+    }
+    window.activatePassiveSlot = async function() {
+      const p=getPassiveTimes(); if(isAdsBusy || (p.hoursGranted>=12&&(p.endAt>Date.now()||p.hoursPaid<p.hoursGranted))) return;
+      isAdsBusy=true; updatePassiveUI();
+      try {
+        const result=await getAdsgramController().show();
+        if(result && result.done===false) throw new Error('Реклама не досмотрена');
+        const now=Date.now(), active=p.endAt>now;
+        const granted=active?p.hoursGranted:0, paid=active?p.hoursPaid:0;
+        if(granted>=12) throw new Error('Лимит 12 часов достигнут');
+        if(!active){ state.passiveStartedAt=now; state.passiveLastRewardAt=now; state.passiveHoursGranted=1; state.passiveHoursPaid=0; state.passiveEndAt=now+3600000; }
+        else { state.passiveHoursGranted=granted+1; state.passiveHoursPaid=paid; state.passiveEndAt=p.endAt+3600000; }
+        await saveState(); updatePassiveUI(); showToast('Добавлен 1 час пассивного фарма', 'success');
+      } catch(err) { console.warn('AdsGram:',err); showToast('Реклама не завершена или недоступна. Час не добавлен.', 'warn'); }
+      finally { isAdsBusy=false; updatePassiveUI(); }
+    };
+    async function processPassiveIncome(showNotice=true) {
+      const p=getPassiveTimes(); if(!p.startedAt||!p.lastRewardAt||!p.endAt||p.hoursGranted<=p.hoursPaid) return;
+      const now=Date.now(), effective=Math.min(now,p.endAt);
+      const payable=Math.min(Math.floor(Math.max(0,effective-p.lastRewardAt)/3600000),p.hoursGranted-p.hoursPaid);
+      if(payable<1) return;
+      state.coins += payable*100; state.balance=state.coins;
+      state.passiveHoursPaid=p.hoursPaid+payable; state.passiveLastRewardAt=p.lastRewardAt+payable*3600000;
+      if(state.passiveHoursPaid>=state.passiveHoursGranted&&now>=state.passiveEndAt){ state.passiveStartedAt=0;state.passiveLastRewardAt=0;state.passiveEndAt=0;state.passiveHoursGranted=0;state.passiveHoursPaid=0; }
+      await saveState(); if(showNotice) showToast(`Пассивный доход: +${payable*100} RIVAL`, 'success');
+    }
+    window.launchGame = function(url) {
+      const target=new URL(url); target.searchParams.set('uid',String(userId)); target.searchParams.set('returnUrl',location.href);
+      if(tg?.openLink) tg.openLink(target.href); else location.href=target.href;
+    };
+    window.buyLegacyUpgrade = async function(type) {
+      if(type==='multitap' && state.coins>=state.multitapCost){ state.coins-=state.multitapCost; state.baseTapPower+=1; state.multitapCost*=2; }
+      else if(type==='energy' && state.coins>=state.energyCost){ state.coins-=state.energyCost; state.maxEnergy+=500; state.energy=Math.min(state.maxEnergy,state.energy+500); state.energyCost*=2; }
+      else { showToast('Недостаточно RVC для улучшения', 'error'); return; }
+      state.balance=state.coins; await saveState(); updateUI(); updateLegacyUI(); showToast('Улучшение куплено', 'success');
+    };
+    function updateLegacyUI() {
+      const a=document.getElementById('legacy-multitap-sub'), b=document.getElementById('legacy-energy-sub');
+      if(a) a.textContent=`Сила тапа: ${state.baseTapPower} · Цена: ${state.multitapCost}`;
+      if(b) b.textContent=`+500 к максимуму · Цена: ${state.energyCost}`;
+      updatePassiveUI();
+    }
+
+    /**
+     * =========================================================================
+     * WEB AUDIO API СИНТЕЗАТОР ЗВУКОВ
+     * =========================================================================
+     */
+    const SoundFX = (() => {
+      let ctx = null;
+
+      function ensureContext() {
+        if (!state.soundEnabled) return null;
+        if (!ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            ctx = new AudioCtx();
+          }
+        }
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+        return ctx;
+      }
+
+      function playTap(comboPitchOffset = 0) {
+        const c = ensureContext();
+        if (!c) return;
+        try {
+          const now = c.currentTime;
+          const osc = c.createOscillator();
+          const gain = c.createGain();
+
+          const baseFreq = 360 + Math.min(comboPitchOffset * 12, 240);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(baseFreq, now);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.7, now + 0.065);
+
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+
+          osc.connect(gain);
+          gain.connect(c.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } catch (e) {}
+      }
+
+      function playCrit() {
+        const c = ensureContext();
+        if (!c) return;
+        try {
+          const now = c.currentTime;
+          const notes = [587.33, 880, 1174.66];
+          notes.forEach((freq, idx) => {
+            const osc = c.createOscillator();
+            const gain = c.createGain();
+            osc.type = idx === 0 ? 'triangle' : 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.025);
+            osc.frequency.exponentialRampToValueAtTime(freq * 1.12, now + idx * 0.025 + 0.18);
+
+            gain.gain.setValueAtTime(0.13, now + idx * 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.025 + 0.22);
+
+            osc.connect(gain);
+            gain.connect(c.destination);
+            osc.start(now + idx * 0.025);
+            osc.stop(now + idx * 0.025 + 0.24);
+          });
+        } catch (e) {}
+      }
+
+      function playBuy() {
+        const c = ensureContext();
+        if (!c) return;
+        try {
+          const now = c.currentTime;
+          const freqs = [440, 554.37, 659.25];
+          freqs.forEach((f, i) => {
+            const osc = c.createOscillator();
+            const gain = c.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(f, now + i * 0.055);
+            gain.gain.setValueAtTime(0.14, now + i * 0.055);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.16);
+            osc.connect(gain);
+            gain.connect(c.destination);
+            osc.start(now + i * 0.055);
+            osc.stop(now + i * 0.055 + 0.17);
+          });
+        } catch (e) {}
+      }
+
+      function playLevelUp() {
+        const c = ensureContext();
+        if (!c) return;
+        try {
+          const now = c.currentTime;
+          const chord = [523.25, 659.25, 783.99, 1046.5];
+          chord.forEach((f, idx) => {
+            const osc = c.createOscillator();
+            const gain = c.createGain();
+            osc.type = 'sawtooth';
+            const filter = c.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(2200, now);
+
+            osc.frequency.setValueAtTime(f, now + idx * 0.075);
+            gain.gain.setValueAtTime(0.09, now + idx * 0.075);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.35);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(c.destination);
+
+            osc.start(now + idx * 0.075);
+            osc.stop(now + idx * 0.075 + 0.36);
+          });
+        } catch (e) {}
+      }
+
+      function playChestOpen() {
+        const c = ensureContext();
+        if (!c) return;
+        try {
+          const now = c.currentTime;
+          const arpeggio = [392.0, 493.88, 587.33, 783.99, 987.77];
+          arpeggio.forEach((f, i) => {
+            const osc = c.createOscillator();
+            const gain = c.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + i * 0.06);
+            gain.gain.setValueAtTime(0.14, now + i * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.28);
+            osc.connect(gain);
+            gain.connect(c.destination);
+            osc.start(now + i * 0.06);
+            osc.stop(now + i * 0.06 + 0.3);
+          });
+        } catch (e) {}
+      }
+
+      return { playTap, playCrit, playBuy, playLevelUp, playChestOpen };
+    })();
+
+    /**
+     * =========================================================================
+     * ВСПОМОГАТЕЛЬНЫЕ РАСЧЁТЫ И УВЕДОМЛЕНИЯ
+     * =========================================================================
+     */
+
+    function formatNumber(num) {
+      const n = Math.floor(num);
+      if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M';
+      if (n >= 10_000) return (n / 1_000).toFixed(1) + 'K';
+      return n.toLocaleString('ru-RU');
+    }
+
+    function getCurrentRank(coins) {
+      let current = RANK_TIERS[0];
+      for (const tier of RANK_TIERS) {
+        if (coins >= tier.minCoins) current = tier;
+      }
+      return current;
+    }
+
+    function getXpForNextLevel(level) {
+      return Math.floor(100 * Math.pow(1.38, level - 1));
+    }
+
+    function getUpgradeCost(def, level) {
+      return Math.floor(def.baseCost * Math.pow(def.costMult, level - 1));
+    }
+
+    function getRefillCost() {
+      return Math.max(50, state.level * 75);
+    }
+
+    function getTurboCost() {
+      return Math.max(200, state.level * 180);
+    }
+
+    function getArtifactBonuses() {
+      let passive = 0;
+      let tap = 0;
+      for (const id of state.unlockedArtifacts) {
+        const art = ARTIFACT_DEFS.find((a) => a.id === id);
+        if (art) {
+          passive += art.passivePerSec;
+          tap += art.tapBonus;
+        }
+      }
+      return { passive, tap };
+    }
+
+    function getActiveMultiplier(now = Date.now()) {
+      let mult = 1;
+      if (state.turboUntil > now) mult *= 3;
+      if (state.x2Until > now) mult *= 2;
+      return mult;
+    }
+
+    function getTapValue(now = Date.now()) {
+      const artBonus = getArtifactBonuses().tap;
+      const levelBonus = Math.floor((state.level - 1) * 0.5);
+      const base = state.baseTapPower + artBonus + levelBonus;
+      return Math.max(1, Math.round(base * getActiveMultiplier(now)));
+    }
+
+    function getPassiveIncomePerSec(now = Date.now()) {
+      const artPassive = getArtifactBonuses().passive;
+      const mult = state.turboUntil > now ? 2 : 1;
+      return artPassive * mult;
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const palette = {
+        info: 'bg-slate-900/95 border-cyan-400/40 text-cyan-100',
+        success: 'bg-slate-900/95 border-emerald-400/45 text-emerald-200',
+        warn: 'bg-slate-900/95 border-amber-400/45 text-amber-200',
+        error: 'bg-slate-900/95 border-rose-400/45 text-rose-200'
+      };
+
+      const el = document.createElement('div');
+      el.className = `px-4 py-2.5 rounded-2xl border backdrop-blur-xl shadow-2xl text-xs font-bold text-center transition-all duration-300 ${palette[type] || palette.info}`;
+      el.textContent = message;
+      container.appendChild(el);
+
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-8px)';
+        setTimeout(() => el.remove(), 300);
+      }, 2200);
+    }
+
+    function addXp(amount) {
+      state.xp += amount;
+      let leveledUp = false;
+      let needed = getXpForNextLevel(state.level);
+      while (state.xp >= needed) {
+        state.xp -= needed;
+        state.level += 1;
+        state.maxEnergy += 50;
+        state.energy = state.maxEnergy;
+        const levelBonusCoins = state.level * 60;
+        state.coins += levelBonusCoins;
+        leveledUp = true;
+        needed = getXpForNextLevel(state.level);
+      }
+
+      if (leveledUp) {
+        SoundFX.playLevelUp();
+        if (navigator.vibrate) {
+          try { navigator.vibrate([40, 30, 60]); } catch (e) {}
+        }
+        showToast(`🎉 Новый уровень ${state.level}! Энергия восстановлена + бонус RVC!`, 'success');
+      }
+    }
+
+    /**
+     * =========================================================================
+     * ТАП-МЕХАНИКА, ИСКРЫ, МИНИ-МОНЕТКИ R И ВСПЛЫВАЮЩИЕ ЧИСЛА
+     * =========================================================================
+     */
+
+    let comboCounter = 0;
+    let comboResetTimer = null;
+
+    function spawnFloatingText(x, y, text, isCrit) {
+      const el = document.createElement('div');
+      el.className = isCrit ? 'floating-crit text-xl sm:text-2xl' : 'floating-num text-lg sm:text-xl';
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+
+      if (isCrit) {
+        el.innerHTML = `<span class="bg-gradient-to-r from-amber-300 via-pink-400 to-cyan-300 bg-clip-text text-transparent">⚡ КРИТ ${text} RVC!</span>`;
+      } else {
+        el.innerHTML = `<span class="text-white">${text}</span> <span class="text-amber-300 text-xs font-black">RVC</span>`;
+      }
+
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), isCrit ? 1050 : 850);
+    }
+
+    function spawnSparkAndCoinBurst(x, y, isCrit) {
+      const colors = isCrit
+        ? ['#fbbf24', '#ec4899', '#22d3ee', '#ffffff']
+        : ['#fbbf24', '#22d3ee', '#a855f7', '#f472b6'];
+      const count = isCrit ? 14 : 8;
+
+      for (let i = 0; i < count; i++) {
+        const isMiniCoin = i % 2 === 0;
+        const particle = document.createElement('div');
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.45;
+        const dist = (isCrit ? 74 : 46) + Math.random() * 34;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+
+        particle.style.position = 'fixed';
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        particle.style.pointerEvents = 'none';
+        particle.style.zIndex = '58';
+        particle.style.transition = 'transform 0.56s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.56s ease-out';
+
+        if (isMiniCoin) {
+          const size = isCrit ? 18 : 15;
+          particle.style.width = `${size}px`;
+          particle.style.height = `${size}px`;
+          particle.style.borderRadius = '9999px';
+          particle.style.background = 'linear-gradient(135deg, #fef08a, #f59e0b)';
+          particle.style.color = '#1e1b4b';
+          particle.style.fontSize = '9px';
+          particle.style.fontWeight = '900';
+          particle.style.display = 'flex';
+          particle.style.alignItems = 'center';
+          particle.style.justifyContent = 'center';
+          particle.style.boxShadow = '0 0 10px rgba(251, 191, 36, 0.75)';
+          particle.textContent = 'R';
+        } else {
+          const size = isCrit ? 6 + Math.random() * 5 : 4 + Math.random() * 4;
+          particle.style.width = `${size}px`;
+          particle.style.height = `${size}px`;
+          particle.style.borderRadius = '9999px';
+          particle.style.backgroundColor = colors[i % colors.length];
+          particle.style.boxShadow = `0 0 10px ${colors[i % colors.length]}`;
         }
 
-        let userId = tg?.initDataUnsafe?.user?.id;
-
-        if (!userId) {
-            userId = localStorage.getItem('rival_demo_uid');
-
-            if (!userId) {
-                userId = 'demo_' + Math.floor(Math.random() * 1000000);
-                localStorage.setItem('rival_demo_uid', userId);
-            }
-        }
-
-        const userDocRef = doc(db, "users", String(userId));
-
-        let isDirty = false;
-        let isLoadingUser = false;
-        let state = {
-            balance: 0,
-            energy: 1000,
-            maxEnergy: 1000,
-            tapValue: 1,
-            multitapCost: 100,
-            energyCost: 200,
-            username: tg?.initDataUnsafe?.user?.username || 'Player',
-            lastEnergyUpdate: Date.now(),
-            passiveRunHours: 0,
-            passiveRunStartedAt: 0,
-            passiveHoursGranted: 0,
-            passiveHoursPaid: 0,
-            passiveEndAt: 0,
-            groupRewardClaimed: false
-        };
-
-        async function loadUserData() {
-            if (isLoadingUser) return;
-            isLoadingUser = true;
-
-            try {
-                const snap = await getDoc(userDocRef);
-
-                if (snap.exists()) {
-                    const cloudData = snap.data();
-                    state = { ...state, ...cloudData };
-
-                    // Максимальная энергия берётся из Firestore и никогда не откатывается
-                    // к стартовым 1000 из локального шаблона.
-                    const savedMaxEnergy = Number(cloudData.maxEnergy);
-                    state.maxEnergy = Number.isFinite(savedMaxEnergy) && savedMaxEnergy > 0
-                        ? Math.max(1000, savedMaxEnergy)
-                        : Math.max(1000, Number(state.maxEnergy) || 1000);
-                    state.energy = Math.max(0, Math.min(
-                        state.maxEnergy,
-                        Number.isFinite(Number(cloudData.energy)) ? Number(cloudData.energy) : state.maxEnergy
-                    ));
-                } else {
-                    state.lastEnergyUpdate = Date.now();
-                    await setDoc(userDocRef, state);
-                    await processReferral();
-                }
-
-                const now = Date.now();
-
-                // Миграция сохранений со старой системой выбора 1–10 часов.
-                // Инициализация новых полей фарма без сброса уже сохранённых данных.
-                state.passiveHoursGranted = Math.max(0, Math.min(12, Number(state.passiveHoursGranted) || 0));
-                state.passiveHoursPaid = Math.max(0, Number(state.passiveHoursPaid) || 0);
-                state.passiveEndAt = Number(state.passiveEndAt) || 0;
-
-                const lastEnergy = Number(state.lastEnergyUpdate) || now;
-                const elapsed = Math.max(0, Math.floor((now - lastEnergy) / 1000));
-
-                state.energy = Math.min(
-                    Number(state.maxEnergy) || 1000,
-                    (Number(state.energy) || 0) + elapsed * 3
-                );
-
-                state.lastEnergyUpdate = now;
-
-                await processPassiveIncome();
-                await saveUserData();
-                updateUI();
-                updateReferralUI();
-                updatePassiveUI();
-            } catch (error) {
-                console.error("Ошибка загрузки данных из Firestore:", error);
-            } finally {
-                isLoadingUser = false;
-            }
-        }
-
-        async function processReferral() {
-            const params = new URLSearchParams(window.location.search);
-            const referrerId = params.get('ref') || tg?.initDataUnsafe?.start_param || '';
-
-            if (!referrerId || String(referrerId) === String(userId)) return;
-
-            const referrerRef = doc(db, 'users', String(referrerId));
-
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const newUserSnap = await transaction.get(userDocRef);
-                    if (!newUserSnap.exists()) return;
-
-                    const newUserData = newUserSnap.data();
-
-                    if (newUserData.referredBy || newUserData.referralProcessed) return;
-
-                    const referrerSnap = await transaction.get(referrerRef);
-                    if (!referrerSnap.exists()) return;
-
-                    const referrerData = referrerSnap.data();
-
-                    transaction.update(referrerRef, {
-                        balance: (Number(referrerData.balance) || 0) + 10000
-                    });
-
-                    transaction.update(userDocRef, {
-                        referredBy: String(referrerId),
-                        referralProcessed: true
-                    });
-                });
-            } catch (error) {
-                console.error('Ошибка обработки реферала:', error);
-            }
-        }
-
-        function makeReferralLink() {
-            // startapp передаёт ID пригласившего в Telegram Mini App как start_param.
-            return `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=${encodeURIComponent(String(userId))}`;
-        }
-
-        function updateReferralUI() {
-            const text = document.getElementById('referral-link-text');
-            if (text) text.textContent = makeReferralLink();
-        }
-
-        window.copyReferralLink = async function() {
-            const link = makeReferralLink();
-
-            try {
-                await navigator.clipboard.writeText(link);
-                alert('Ссылка скопирована!');
-            } catch (error) {
-                const text = document.getElementById('referral-link-text');
-                if (text) {
-                    const range = document.createRange();
-                    range.selectNodeContents(text);
-                    const selection = window.getSelection();
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                }
-                alert('Выдели ссылку и скопируй её.');
-            }
-        };
-
-        window.joinGroup = async function() {
-            if (state.groupRewardClaimed) {
-                window.open('https://t.me/ProRivalArena', '_blank', 'noopener');
-                return;
-            }
-
-            state.groupRewardClaimed = true;
-            state.balance = (Number(state.balance) || 0) + 5000;
-
-            await saveUserData();
-            updateUI();
-
-            alert('Поздравляем! Вам начислено 5 000 RIVAL!');
-            window.open('https://t.me/ProRivalArena', '_blank', 'noopener');
-        };
-
-        function getPassiveTimes() {
-            return {
-                startedAt: Number(state.passiveStartedAt) || 0,
-                lastRewardAt: Number(state.passiveLastRewardAt) || 0,
-                endAt: Number(state.passiveEndAt) || 0,
-                hoursGranted: Math.max(0, Math.min(12, Number(state.passiveHoursGranted) || 0)),
-                hoursPaid: Math.max(0, Number(state.passiveHoursPaid) || 0)
-            };
-        }
-
-        function updatePassiveUI() {
-            const { startedAt, lastRewardAt, endAt, hoursGranted, hoursPaid } = getPassiveTimes();
-            const now = Date.now();
-            const active = startedAt > 0 && endAt > now;
-            const busy = Boolean(window._rivalAdsgramBusy);
-            const button = document.getElementById('activate-passive-btn');
-            const slot = document.getElementById('passive-slots-status');
-            const pending = document.getElementById('passive-pending-status');
-            const remainingAds = Math.max(0, 12 - hoursGranted);
-
-            if (slot) {
-                slot.textContent = `Просмотров: ${hoursGranted} / 12 · Начислено часов: ${hoursPaid} / ${hoursGranted}`;
-            }
-
-            if (pending) {
-                if (active) {
-                    const remainingMs = Math.max(0, endAt - now);
-                    const minutes = Math.ceil(remainingMs / 60000);
-                    const h = Math.floor(minutes / 60);
-                    const m = minutes % 60;
-                    pending.textContent = `Фарм активен · осталось ${h} ч ${m} мин · +100 RIVAL за каждый полный час`;
-                } else if (hoursGranted > hoursPaid) {
-                    pending.textContent = 'Ожидается начисление оставшихся часов фарма.';
-                } else {
-                    pending.textContent = 'Посмотри рекламу — получишь +1 час фарма. Можно добавить до 12 часов.';
-                }
-            }
-
-            if (button) {
-                const limitReached = hoursGranted >= 12 && (active || hoursPaid < hoursGranted);
-                button.disabled = busy || limitReached;
-                button.textContent = busy ? 'ЗАГРУЗКА РЕКЛАМЫ…' :
-                    (limitReached ? 'ЛИМИТ 12 ЧАСОВ ДОСТИГНУТ' : 'СМОТРЕТЬ РЕКЛАМУ · +1 ЧАС');
-                button.style.opacity = button.disabled ? '0.6' : '1';
-            }
-        }
-
-        function getAdsgramController() {
-            if (adsgramController) return adsgramController;
-            if (!window.Adsgram || typeof window.Adsgram.init !== 'function') {
-                throw new Error('AdsGram SDK не загрузился');
-            }
-            adsgramController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID, debug: false });
-            return adsgramController;
-        }
-
-        window.activatePassiveSlot = async function() {
-            // Сначала начисляем уже завершённые часы, чтобы новый цикл не затёр старую награду.
-            await processPassiveIncome();
-            const { startedAt, endAt, hoursGranted, hoursPaid } = getPassiveTimes();
-            const now = Date.now();
-            const sessionActive = startedAt > 0 && endAt > now;
-            const sessionNotFinished = startedAt > 0 && hoursPaid < hoursGranted;
-
-            if (window._rivalAdsgramBusy || hoursGranted >= 12 && (sessionActive || sessionNotFinished)) {
-                updatePassiveUI();
-                return;
-            }
-
-            window._rivalAdsgramBusy = true;
-            updatePassiveUI();
-
-            try {
-                const controller = getAdsgramController();
-                const result = await controller.show();
-                if (result && result.done === false) {
-                    throw new Error('Реклама не была досмотрена');
-                }
-
-                const completedAt = Date.now();
-                const stillActive = Number(state.passiveEndAt) > completedAt;
-                const currentGranted = stillActive ? Math.max(0, Number(state.passiveHoursGranted) || 0) : 0;
-                const currentPaid = stillActive ? Math.max(0, Number(state.passiveHoursPaid) || 0) : 0;
-
-                if (currentGranted >= 12) {
-                    alert('Лимит в 12 часов фарма уже достигнут. Дождись завершения текущего цикла.');
-                    return;
-                }
-
-                if (!stillActive) {
-                    state.passiveStartedAt = completedAt;
-                    state.passiveLastRewardAt = completedAt;
-                    state.passiveHoursGranted = 1;
-                    state.passiveHoursPaid = 0;
-                    state.passiveEndAt = completedAt + 3600000;
-                } else {
-                    state.passiveHoursGranted = currentGranted + 1;
-                    state.passiveHoursPaid = currentPaid;
-                    state.passiveEndAt = Number(state.passiveEndAt) + 3600000;
-                }
-
-                await saveUserData();
-                updatePassiveUI();
-                alert('Готово! Добавлен 1 час фарма. За каждый полный час начисляется 100 RIVAL.');
-            } catch (error) {
-                console.warn('AdsGram rewarded ad was not completed:', error);
-                alert('Реклама не завершена или сейчас недоступна. Час фарма не добавлен.');
-            } finally {
-                window._rivalAdsgramBusy = false;
-                updatePassiveUI();
-            }
-        };
-
-        async function processPassiveIncome() {
-            const { startedAt, lastRewardAt, endAt, hoursGranted, hoursPaid } = getPassiveTimes();
-            if (!startedAt || !lastRewardAt || !endAt || hoursGranted <= hoursPaid) return;
-
-            const now = Date.now();
-            const effectiveNow = Math.min(now, endAt);
-            const elapsedFullHours = Math.floor(Math.max(0, effectiveNow - lastRewardAt) / 3600000);
-            const payableHours = Math.min(elapsedFullHours, hoursGranted - hoursPaid);
-            if (payableHours < 1) {
-                if (now >= endAt && hoursPaid >= hoursGranted) resetPassiveSession();
-                return;
-            }
-
-            state.balance = (Number(state.balance) || 0) + payableHours * 100;
-            state.passiveHoursPaid = hoursPaid + payableHours;
-            state.passiveLastRewardAt = lastRewardAt + payableHours * 3600000;
-
-            if (state.passiveHoursPaid >= hoursGranted && now >= endAt) {
-                resetPassiveSession();
-            }
-
-            await saveUserData();
-            updateUI();
-            updatePassiveUI();
-            alert(`Пассивный доход: начислено ${payableHours * 100} RIVAL за ${payableHours} ч.`);
-        }
-
-        function resetPassiveSession() {
-            state.passiveStartedAt = 0;
-            state.passiveLastRewardAt = 0;
-            state.passiveEndAt = 0;
-            state.passiveHoursGranted = 0;
-            state.passiveHoursPaid = 0;
-        }
-
-        setInterval(async () => {
-            try {
-                await processPassiveIncome();
-                updatePassiveUI();
-            } catch (error) {
-                console.error('Ошибка начисления пассивного дохода:', error);
-            }
-        }, 30000);
-
-        async function saveUserData() {
-            try {
-                // Транзакция читает актуальную запись. Если в облаке уже 4500 энергии,
-                // устаревшее локальное значение 1000 не сможет уменьшить максимум.
-                await runTransaction(db, async (transaction) => {
-                    const snap = await transaction.get(userDocRef);
-                    const cloud = snap.exists() ? snap.data() : {};
-                    const cloudMax = Number(cloud.maxEnergy) || 1000;
-                    const localMax = Number(state.maxEnergy) || 1000;
-                    const safeMaxEnergy = Math.max(1000, cloudMax, localMax);
-                    const safeEnergy = Math.max(0, Math.min(
-                        safeMaxEnergy,
-                        Number(state.energy) || 0
-                    ));
-
-                    const payload = {
-                        ...state,
-                        maxEnergy: safeMaxEnergy,
-                        energy: safeEnergy,
-                        lastEnergyUpdate: Number(state.lastEnergyUpdate) || Date.now()
-                    };
-                    transaction.set(userDocRef, payload, { merge: true });
-                    state.maxEnergy = safeMaxEnergy;
-                    state.energy = safeEnergy;
-                });
-            } catch (error) {
-                console.error("Ошибка сохранения в Firestore:", error);
-            }
-        }
-
-        function updateUI() {
-            const balanceEl = document.getElementById('balance');
-            const energyText = document.getElementById('energy-text');
-            const energyFill = document.getElementById('energy-fill');
-
-            balanceEl.innerText = (Number(state.balance) || 0).toLocaleString();
-            energyText.innerText = `${state.energy} / ${state.maxEnergy}`;
-
-            const percent = Math.max(0, Math.min(100, (state.energy / state.maxEnergy) * 100));
-            energyFill.style.width = `${percent}%`;
-
-            document.getElementById('multitap-sub').innerText =
-                `+${state.tapValue + 1} за тап | Цена: ${state.multitapCost}`;
-
-            document.getElementById('energy-sub').innerText =
-                `+500 к базе | Цена: ${state.energyCost}`;
-
-            updatePassiveUI();
-        }
-
-        const coinBtn = document.getElementById('coin-btn');
-
-        function handleTap(event) {
-            if (event.type === 'touchstart') event.preventDefault();
-
-            if (state.energy < state.tapValue) return;
-
-            state.energy -= state.tapValue;
-            state.balance += state.tapValue;
-            state.lastEnergyUpdate = Date.now();
-            isDirty = true;
-
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-
-            const rect = coinBtn.getBoundingClientRect();
-            let clientX = event.clientX;
-            let clientY = event.clientY;
-
-            if (event.touches && event.touches.length > 0) {
-                clientX = event.touches[0].clientX;
-                clientY = event.touches[0].clientY;
-            }
-
-            const x = (clientX || rect.left + rect.width / 2) - rect.left;
-            const y = (clientY || rect.top + rect.height / 2) - rect.top;
-
-            const pop = document.createElement('div');
-            pop.className = 'tap-pop';
-            pop.textContent = `+${state.tapValue}`;
-            pop.style.left = `${x}px`;
-            pop.style.top = `${y}px`;
-
-            coinBtn.appendChild(pop);
-            setTimeout(() => pop.remove(), 800);
-
-            updateUI();
-        }
-
-        coinBtn.addEventListener('touchstart', handleTap, { passive: false });
-
-        coinBtn.addEventListener('click', function(event) {
-            // Не начисляем второй тап после touchstart на мобильных устройствах.
-            if (event.detail === 0) return;
-            if ('ontouchstart' in window) return;
-            handleTap(event);
+        document.body.appendChild(particle);
+
+        requestAnimationFrame(() => {
+          particle.style.transform = `translate(${dx}px, ${dy}px) rotate(${isMiniCoin ? 180 : 0}deg) scale(0.35)`;
+          particle.style.opacity = '0';
         });
 
-        // Восстановление энергии: 3 единицы в секунду, в том числе офлайн.
-        setInterval(() => {
-            if (state.energy < state.maxEnergy) {
-                state.energy = Math.min(state.maxEnergy, state.energy + 3);
-                state.lastEnergyUpdate = Date.now();
-                isDirty = true;
-                updateUI();
-            } else {
-                state.lastEnergyUpdate = Date.now();
+        setTimeout(() => particle.remove(), 580);
+      }
+    }
+
+    function tiltCoreToward(clientX, clientY) {
+      const btn = document.getElementById('tap-core-btn');
+      const inner = document.getElementById('core-inner-wrapper');
+      if (!btn || !inner) return;
+
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const normX = Math.max(-1, Math.min(1, (clientX - cx) / (rect.width / 2)));
+      const normY = Math.max(-1, Math.min(1, (clientY - cy) / (rect.height / 2)));
+
+      const rotateY = normX * 15;
+      const rotateX = -normY * 15;
+
+      btn.style.transform = 'scale(0.93)';
+      inner.style.transform = `perspective(500px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(0.96)`;
+
+      clearTimeout(tiltCoreToward._resetTimer);
+      tiltCoreToward._resetTimer = setTimeout(() => {
+        btn.style.transform = 'scale(1)';
+        inner.style.transform = 'perspective(500px) rotateX(0deg) rotateY(0deg) scale(1)';
+      }, 110);
+    }
+
+    function handleTapAt(clientX, clientY) {
+      const now = Date.now();
+      const isTurbo = state.turboUntil > now;
+      const energyCost = isTurbo ? 0 : 1;
+
+      if (state.energy < energyCost) {
+        showToast('⚡ Закончилась энергия! Подожди реген или нажми «Заправка»', 'warn');
+        return;
+      }
+
+      state.energy = Math.max(0, state.energy - energyCost);
+      state.totalTaps += 1;
+
+      const critChance = isTurbo ? 0.18 : 0.10;
+      const isCrit = Math.random() < critChance;
+
+      const baseGain = getTapValue(now);
+      const earned = isCrit ? baseGain * 5 : baseGain;
+
+      state.coins += earned;
+      addXp(isCrit ? 6 : 2);
+
+      comboCounter += 1;
+      clearTimeout(comboResetTimer);
+      comboResetTimer = setTimeout(() => { comboCounter = 0; }, 900);
+
+      if (isCrit) {
+        SoundFX.playCrit();
+        if (navigator.vibrate) {
+          try { navigator.vibrate([25, 20, 35]); } catch (e) {}
+        }
+      } else {
+        SoundFX.playTap(comboCounter);
+        if (navigator.vibrate) {
+          try { navigator.vibrate(10); } catch (e) {}
+        }
+      }
+
+      const jitterX = clientX + (Math.random() - 0.5) * 24;
+      const jitterY = clientY + (Math.random() - 0.5) * 16;
+
+      tiltCoreToward(clientX, clientY);
+      spawnFloatingText(jitterX, jitterY, `+${formatNumber(earned)}`, isCrit);
+      spawnSparkAndCoinBurst(clientX, clientY, isCrit);
+
+      updateUI(now);
+    }
+
+    function setupTapListeners() {
+      const tapBtn = document.getElementById('tap-core-btn');
+      if (!tapBtn) return;
+
+      tapBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        handleTapAt(e.clientX, e.clientY);
+      });
+    }
+
+    /**
+     * =========================================================================
+     * МИНИ-ИГРЫ: REACTION AIM & CARD FLIP
+     * =========================================================================
+     */
+
+    let aimTimerInterval = null;
+    let aimTargetTimeout = null;
+    let aimActive = false;
+    let aimHits = 0;
+    let aimTimeLeft = 12;
+
+    function openAimGame() {
+      document.getElementById('aim-game-modal').classList.remove('hidden');
+      document.getElementById('aim-best-count').textContent = state.aimBest;
+      document.getElementById('aim-hits-count').textContent = '0';
+      document.getElementById('aim-time-left').textContent = '12.0';
+      const arena = document.getElementById('aim-arena');
+      arena.innerHTML = `<button id="aim-start-btn" type="button" class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition">Старт тренировки</button>`;
+      document.getElementById('aim-start-btn').addEventListener('click', startAimRound);
+    }
+
+    function closeAimGame() {
+      aimActive = false;
+      clearInterval(aimTimerInterval);
+      clearTimeout(aimTargetTimeout);
+      document.getElementById('aim-game-modal').classList.add('hidden');
+    }
+
+    function spawnAimTarget() {
+      if (!aimActive) return;
+      const arena = document.getElementById('aim-arena');
+      if (!arena) return;
+
+      arena.innerHTML = '';
+      const target = document.createElement('button');
+      target.type = 'button';
+      target.textContent = '🎯';
+      target.className = 'w-12 h-12 rounded-full bg-gradient-to-br from-amber-300 via-pink-500 to-cyan-400 flex items-center justify-center text-2xl shadow-lg cursor-pointer active:scale-75 transition-transform';
+      target.style.position = 'absolute';
+
+      const maxX = Math.max(20, arena.clientWidth - 64);
+      const maxY = Math.max(20, arena.clientHeight - 64);
+      target.style.left = `${Math.floor(12 + Math.random() * maxX)}px`;
+      target.style.top = `${Math.floor(12 + Math.random() * maxY)}px`;
+
+      target.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (!aimActive) return;
+        aimHits += 1;
+        state.coins += 15;
+        addXp(4);
+        SoundFX.playTap(aimHits);
+        document.getElementById('aim-hits-count').textContent = String(aimHits);
+        spawnFloatingText(e.clientX, e.clientY, '+15', false);
+        updateUI();
+        spawnAimTarget();
+      });
+
+      arena.appendChild(target);
+
+      aimTargetTimeout = setTimeout(() => {
+        if (aimActive) spawnAimTarget();
+      }, 1150);
+    }
+
+    function startAimRound() {
+      aimActive = true;
+      aimHits = 0;
+      aimTimeLeft = 12;
+      document.getElementById('aim-hits-count').textContent = '0';
+      document.getElementById('aim-time-left').textContent = '12.0';
+      spawnAimTarget();
+
+      const startStamp = Date.now();
+      clearInterval(aimTimerInterval);
+      aimTimerInterval = setInterval(() => {
+        const elapsed = (Date.now() - startStamp) / 1000;
+        aimTimeLeft = Math.max(0, 12 - elapsed);
+        document.getElementById('aim-time-left').textContent = aimTimeLeft.toFixed(1);
+
+        if (aimTimeLeft <= 0) {
+          aimActive = false;
+          clearInterval(aimTimerInterval);
+          clearTimeout(aimTargetTimeout);
+          if (aimHits > state.aimBest) {
+            state.aimBest = aimHits;
+          }
+          saveState();
+          updateUI();
+          const arena = document.getElementById('aim-arena');
+          arena.innerHTML = `
+            <div class="text-center p-4">
+              <div class="text-sm font-black text-amber-300 mb-1">Раунд завершён! Попаданий: ${aimHits}</div>
+              <div class="text-xs text-slate-300 mb-3">Заработано +${aimHits * 15} RVC</div>
+              <button id="aim-retry-btn" type="button" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-purple-500 text-slate-950 font-black text-xs">Сыграть ещё</button>
+            </div>
+          `;
+          document.getElementById('aim-retry-btn')?.addEventListener('click', startAimRound);
+        }
+      }, 100);
+    }
+
+    // Card Flip мини-игра
+    let cardsDeck = [];
+    let cardsRevealed = [];
+    let cardsPicksLeft = 2;
+    let cardsFinished = false;
+
+    function openCardsGame() {
+      document.getElementById('cards-game-modal').classList.remove('hidden');
+      initCardsRound();
+    }
+
+    function closeCardsGame() {
+      document.getElementById('cards-game-modal').classList.add('hidden');
+    }
+
+    function initCardsRound() {
+      cardsPicksLeft = 2;
+      cardsFinished = false;
+      cardsRevealed = [false, false, false, false, false, false];
+      // 2 пары одинаковых иконок + 2 разные карты
+      const pool = ['👑', '👑', '⚡', '⚡', '💎', '🚀'];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      cardsDeck = pool;
+      document.getElementById('cards-picks-left').textContent = '2';
+      document.getElementById('cards-status-bar').innerHTML = 'Выбери карту (осталось попыток: <span id="cards-picks-left">2</span>)';
+      renderCardsGrid();
+    }
+
+    function renderCardsGrid() {
+      const grid = document.getElementById('cards-grid');
+      if (!grid) return;
+      grid.innerHTML = cardsDeck.map((icon, idx) => {
+        const open = cardsRevealed[idx];
+        return `
+          <button
+            type="button"
+            onclick="pickCard(${idx})"
+            class="h-20 rounded-2xl border flex items-center justify-center text-3xl font-black transition active:scale-95 ${
+              open
+                ? 'bg-gradient-to-br from-amber-400/25 to-purple-600/30 border-amber-300/60 text-white'
+                : 'bg-slate-900/90 hover:bg-slate-800 border-white/15 text-amber-300'
+            }"
+          >
+            ${open ? icon : 'R'}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function pickCard(index) {
+      if (cardsFinished || cardsRevealed[index] || cardsPicksLeft <= 0) return;
+      cardsRevealed[index] = true;
+      cardsPicksLeft -= 1;
+      SoundFX.playTap(2 - cardsPicksLeft);
+      renderCardsGrid();
+
+      const openedIndices = cardsRevealed
+        .map((val, idx) => (val ? idx : -1))
+        .filter((idx) => idx !== -1);
+
+      if (openedIndices.length === 2) {
+        cardsFinished = true;
+        const [a, b] = openedIndices;
+        const matched = cardsDeck[a] === cardsDeck[b];
+        if (matched) {
+          const prize = 120 + state.level * 25;
+          state.coins += prize;
+          state.cardsWins += 1;
+          addXp(20);
+          SoundFX.playChestOpen();
+          document.getElementById('cards-status-bar').innerHTML = `<span class="text-emerald-300">🎉 Пара найдена! +${formatNumber(prize)} RVC!</span>`;
+          showToast(`🃏 Пара карт открыта! +${formatNumber(prize)} RVC`, 'success');
+        } else {
+          const consolation = 25;
+          state.coins += consolation;
+          document.getElementById('cards-status-bar').innerHTML = `<span class="text-slate-300">Карты разные — утешительный бонус +${consolation} RVC</span>`;
+        }
+        saveState();
+        updateUI();
+      } else {
+        document.getElementById('cards-picks-left').textContent = String(cardsPicksLeft);
+      }
+    }
+
+    /**
+     * =========================================================================
+     * БУСТЫ, ЗАПРАВКА ЭНЕРГИИ, СУНДУК НИШТЯКОВ, РЕЛИКВИИ И КВЕСТЫ
+     * =========================================================================
+     */
+
+    function buyUpgrade(upgradeId) {
+      const def = UPGRADE_DEFS.find((u) => u.id === upgradeId);
+      if (!def) return;
+
+      const currentLvl = state.upgrades[upgradeId] || 1;
+      const cost = getUpgradeCost(def, currentLvl);
+
+      if (state.coins < cost) {
+        showToast('Недостаточно RVC для улучшения!', 'error');
+        return;
+      }
+
+      state.coins -= cost;
+      state.upgrades[upgradeId] = currentLvl + 1;
+      state.upgradesBought += 1;
+
+      if (upgradeId === 'tapPower') {
+        state.baseTapPower += 1;
+      } else if (upgradeId === 'energyCap') {
+        state.maxEnergy += 150;
+        state.energy = Math.min(state.maxEnergy, state.energy + 150);
+      } else if (upgradeId === 'energyRegen') {
+        state.energyRegen += 1;
+      }
+
+      SoundFX.playBuy();
+      addXp(18);
+      showToast(`✅ «${def.title}» улучшен до ур. ${currentLvl + 1}!`, 'success');
+      saveState();
+      updateUI();
+    }
+
+    function activateTurbo() {
+      const now = Date.now();
+      if (state.turboUntil > now) {
+        showToast('🚀 Турбо-кран уже активен!', 'info');
+        return;
+      }
+      if (state.turboCooldownUntil > now) {
+        const leftSec = Math.ceil((state.turboCooldownUntil - now) / 1000);
+        showToast(`⏳ Перезарядка Турбо-крана: ${leftSec} сек`, 'warn');
+        return;
+      }
+
+      const cost = getTurboCost();
+      if (state.coins < cost) {
+        showToast('Недостаточно RVC для запуска Турбо-крана!', 'error');
+        return;
+      }
+
+      state.coins -= cost;
+      state.turboUntil = now + 15_000;
+      state.turboCooldownUntil = now + 45_000;
+      SoundFX.playBuy();
+      showToast('🚀 ТУРБО-КРАН ЗАПУЩЕН! x3 RVC и 0 траты энергии на 15 сек!', 'success');
+      saveState();
+      updateUI(now);
+    }
+
+    function refillEnergy() {
+      if (state.energy >= state.maxEnergy) {
+        showToast('⚡ Энергия уже на максимуме!', 'info');
+        return;
+      }
+      const cost = getRefillCost();
+      if (state.coins < cost) {
+        showToast('Недостаточно RVC для быстрой заправки!', 'error');
+        return;
+      }
+
+      state.coins -= cost;
+      state.energy = state.maxEnergy;
+      SoundFX.playBuy();
+      showToast('🔋 Реактор полностью заправлен!', 'success');
+      saveState();
+      updateUI();
+    }
+
+    function openMysteryChest() {
+      const now = Date.now();
+      const elapsed = now - state.lastChestTime;
+      if (state.lastChestTime !== 0 && elapsed < CHEST_COOLDOWN_MS) {
+        const secLeft = Math.ceil((CHEST_COOLDOWN_MS - elapsed) / 1000);
+        showToast(`⏳ Сундук перезаряжается: ещё ${secLeft} сек`, 'warn');
+        return;
+      }
+
+      state.lastChestTime = now;
+      state.chestsOpened += 1;
+      SoundFX.playChestOpen();
+
+      const lockedArtifacts = ARTIFACT_DEFS.filter((a) => !state.unlockedArtifacts.includes(a.id));
+      const roll = Math.random();
+
+      let rewardTitle = '';
+      let rewardDesc = '';
+      let rewardIcon = '🎁';
+
+      if (lockedArtifacts.length > 0 && roll < 0.24) {
+        const picked = lockedArtifacts[Math.floor(Math.random() * lockedArtifacts.length)];
+        state.unlockedArtifacts.push(picked.id);
+        rewardIcon = picked.icon;
+        rewardTitle = `Реликвия: ${picked.name}!`;
+        rewardDesc = `Новый артефакт добавлен в коллекцию (${picked.rarity}) и даёт бонус: ${picked.bonusText}.`;
+      } else if (roll < 0.56) {
+        const bonusCoins = Math.max(120, state.level * 110 + Math.floor(Math.random() * 140));
+        state.coins += bonusCoins;
+        rewardIcon = '🪙';
+        rewardTitle = `+${formatNumber(bonusCoins)} RVC!`;
+        rewardDesc = 'Тайник киберарены оказался полон монет RivalCoin.';
+      } else if (roll < 0.80) {
+        state.energy = state.maxEnergy;
+        const extra = state.level * 40;
+        state.coins += extra;
+        rewardIcon = '⚡';
+        rewardTitle = 'Полный заряд + бонус RVC!';
+        rewardDesc = `Энергия восстановлена до 100%, плюс начислено +${formatNumber(extra)} RVC.`;
+      } else {
+        state.x2Until = Math.max(state.x2Until, now) + 20_000;
+        rewardIcon = '🔥';
+        rewardTitle = 'Множитель x2 на 20 секунд!';
+        rewardDesc = 'Все твои тапы приносят вдвое больше RVC в течение 20 секунд!';
+      }
+
+      addXp(25);
+      saveState();
+      updateUI(now);
+
+      document.getElementById('chest-reward-icon').textContent = rewardIcon;
+      document.getElementById('chest-reward-title').textContent = rewardTitle;
+      document.getElementById('chest-reward-desc').textContent = rewardDesc;
+      document.getElementById('chest-reward-modal').classList.remove('hidden');
+    }
+
+    function unlockArtifact(artifactId) {
+      const art = ARTIFACT_DEFS.find((a) => a.id === artifactId);
+      if (!art) return;
+      if (state.unlockedArtifacts.includes(artifactId)) {
+        showToast('Эта реликвия уже в твоей коллекции!', 'info');
+        return;
+      }
+      if (state.coins < art.unlockCost) {
+        showToast('Недостаточно RVC для открытия реликвии!', 'error');
+        return;
+      }
+
+      state.coins -= art.unlockCost;
+      state.unlockedArtifacts.push(artifactId);
+      SoundFX.playChestOpen();
+      addXp(30);
+      showToast(`💎 Получена реликвия «${art.name}» (${art.bonusText})!`, 'success');
+      saveState();
+      updateUI();
+    }
+
+    function getQuestProgress(quest) {
+      switch (quest.type) {
+        case 'taps': return state.totalTaps;
+        case 'upgradesBought': return state.upgradesBought;
+        case 'chestsOpened': return state.chestsOpened;
+        case 'artifactsCount': return state.unlockedArtifacts.length;
+        default: return 0;
+      }
+    }
+
+    function claimQuest(questId) {
+      const quest = QUEST_DEFS.find((q) => q.id === questId);
+      if (!quest) return;
+      if (state.claimedQuests.includes(questId)) return;
+
+      const current = getQuestProgress(quest);
+      if (current < quest.target) {
+        showToast('Задание ещё не выполнено!', 'warn');
+        return;
+      }
+
+      state.claimedQuests.push(questId);
+      state.coins += quest.rewardCoins;
+      SoundFX.playLevelUp();
+      addXp(35);
+      showToast(`🎁 Награда за квест: +${formatNumber(quest.rewardCoins)} RVC!`, 'success');
+      saveState();
+      updateUI();
+    }
+
+    /**
+     * =========================================================================
+     * РЕНДЕРИНГ ИНТЕРФЕЙСА И НАВИГАЦИЯ
+     * =========================================================================
+     */
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+
+      const sections = {
+        tap: document.getElementById('view-tap'),
+        hub: document.getElementById('view-hub'),
+        boosts: document.getElementById('view-boosts'),
+        perks: document.getElementById('view-perks'),
+        quests: document.getElementById('view-quests'),
+        ecosystem: document.getElementById('view-ecosystem')
+      };
+
+      Object.entries(sections).forEach(([key, el]) => {
+        if (!el) return;
+        if (key === tabName) {
+          el.classList.remove('hidden');
+          el.classList.remove('tab-enter');
+          void el.offsetWidth;
+          el.classList.add('tab-enter');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+
+      document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
+        const isActive = btn.dataset.tab === tabName;
+        if (isActive) {
+          btn.className = 'nav-tab-btn relative py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 bg-gradient-to-b from-cyan-500/25 to-purple-500/20 border border-cyan-400/40 text-white transition active:scale-95';
+        } else {
+          btn.className = 'nav-tab-btn relative py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent transition active:scale-95';
+        }
+      });
+
+      updateUI();
+    }
+
+    function renderLeaderboard() {
+      const list = document.getElementById('leaderboard-list');
+      if (!list) return;
+
+      const myCoins = Math.floor(state.coins);
+      const myRankInfo = getCurrentRank(myCoins);
+
+      const entries = [
+        ...RIVAL_PLAYERS.map((p) => ({
+          ...p,
+          isMe: false,
+          rankInfo: getCurrentRank(p.coins)
+        })),
+        {
+          name: 'Ты (Rival)',
+          team: 'YOU',
+          coins: myCoins,
+          avatar: '🎮',
+          isMe: true,
+          rankInfo: myRankInfo
+        }
+      ].sort((a, b) => b.coins - a.coins);
+
+      const myPos = entries.findIndex((e) => e.isMe) + 1;
+      const rankPill = document.getElementById('my-rank-pill');
+      if (rankPill) rankPill.textContent = `#${myPos} из ${entries.length}`;
+
+      list.innerHTML = entries.map((item, idx) => {
+        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+        return `
+          <div class="rounded-2xl px-3 py-2.5 border flex items-center justify-between gap-2 ${
+            item.isMe
+              ? 'bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-amber-500/15 border-cyan-400/45'
+              : 'bg-slate-900/65 border-white/10'
+          }">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="w-6 text-center text-xs font-black ${idx < 3 ? 'text-base' : 'text-slate-400'}">${medal}</span>
+              <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-lg shrink-0">${item.avatar}</div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-extrabold text-white truncate">${item.name}</span>
+                  <span class="px-1.5 py-0.2 rounded bg-white/10 text-[9px] font-black text-cyan-200">${item.team}</span>
+                </div>
+                <div class="text-[10px] text-amber-300/90 font-semibold">${item.rankInfo.badge} ${item.rankInfo.title}</div>
+              </div>
+            </div>
+            <div class="text-xs font-black text-amber-300 tabular-nums shrink-0">${formatNumber(item.coins)} RVC</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderUpgradesList() {
+      const list = document.getElementById('upgrades-list');
+      if (!list) return;
+
+      list.innerHTML = UPGRADE_DEFS.map((def) => {
+        const lvl = state.upgrades[def.id] || 1;
+        const cost = getUpgradeCost(def, lvl);
+        const canAfford = state.coins >= cost;
+
+        return `
+          <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl shrink-0">
+                ${def.icon}
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="text-sm font-extrabold text-white truncate">${def.title}</h4>
+                  <span class="px-1.5 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 text-[10px] font-extrabold">
+                    Ур. ${lvl}
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-300 truncate mt-0.5">${def.desc}</p>
+                <div class="text-[11px] font-bold text-emerald-300 mt-0.5">${def.statLabel(lvl)}</div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onclick="buyUpgrade('${def.id}')"
+              class="shrink-0 px-3.5 py-2.5 rounded-xl text-xs font-black transition active:scale-95 ${
+                canAfford
+                  ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-md shadow-amber-500/25 hover:brightness-110'
+                  : 'bg-slate-800/90 text-slate-500 border border-white/5 cursor-not-allowed'
+              }"
+            >
+              ${formatNumber(cost)} RVC
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderArtifactsGrid() {
+      const grid = document.getElementById('artifacts-grid');
+      if (!grid) return;
+
+      grid.innerHTML = ARTIFACT_DEFS.map((art) => {
+        const unlocked = state.unlockedArtifacts.includes(art.id);
+        const canAfford = state.coins >= art.unlockCost;
+
+        return `
+          <div class="rounded-2xl p-3 border flex items-center justify-between gap-3 transition ${
+            unlocked
+              ? 'bg-gradient-to-r from-purple-500/15 via-fuchsia-500/10 to-cyan-500/10 border-fuchsia-400/35'
+              : 'bg-slate-900/65 border-white/10'
+          }">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${
+                unlocked ? 'bg-white/10 shadow-inner' : 'bg-black/40 grayscale opacity-65'
+              }">
+                ${art.icon}
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-xs font-extrabold text-white truncate">${art.name}</span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded bg-white/10 text-amber-200 font-bold">${art.rarity}</span>
+                </div>
+                <div class="text-[11px] font-bold ${unlocked ? 'text-emerald-300' : 'text-slate-400'} mt-0.5">
+                  ${art.bonusText}
+                </div>
+              </div>
+            </div>
+
+            ${
+              unlocked
+                ? `<span class="shrink-0 px-2.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-[11px] font-extrabold text-emerald-300">
+                    ✓ Собран
+                   </span>`
+                : `<button
+                    type="button"
+                    onclick="unlockArtifact('${art.id}')"
+                    class="shrink-0 px-3 py-2 rounded-xl text-[11px] font-black transition active:scale-95 ${
+                      canAfford
+                        ? 'bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white shadow-md shadow-purple-500/25 hover:brightness-110'
+                        : 'bg-slate-800 text-slate-500 border border-white/5'
+                    }"
+                  >
+                    ${formatNumber(art.unlockCost)} RVC
+                   </button>`
             }
-        }, 1000);
+          </div>
+        `;
+      }).join('');
+    }
 
-        setInterval(() => {
-            if (isDirty) {
-                saveUserData();
-                isDirty = false;
-            }
-        }, 3000);
+    function renderQuestsList() {
+      const list = document.getElementById('quests-list');
+      if (!list) return;
 
-        window.buyUpgrade = async function(type) {
-            if (type === 'multitap' && state.balance >= state.multitapCost) {
-                state.balance -= state.multitapCost;
-                state.tapValue += 1;
-                state.multitapCost *= 2;
-            } else if (type === 'energy' && state.balance >= state.energyCost) {
-                state.balance -= state.energyCost;
-                state.maxEnergy += 500;
-                state.energy += 500;
-                state.energyCost *= 2;
-            } else {
-                return;
-            }
+      let readyCount = 0;
 
-            await saveUserData();
-            updateUI();
-        };
+      list.innerHTML = QUEST_DEFS.map((q) => {
+        const claimed = state.claimedQuests.includes(q.id);
+        const current = Math.min(q.target, getQuestProgress(q));
+        const pct = Math.min(100, Math.round((current / q.target) * 100));
+        const isReady = !claimed && current >= q.target;
+        if (isReady) readyCount += 1;
 
-        window.launchGame = function(url) {
-            const gameUrl = new URL(url);
-            gameUrl.searchParams.set('uid', String(userId));
-            gameUrl.searchParams.set('returnUrl', window.location.href);
+        return `
+          <div class="glass-card rounded-2xl p-3.5 border ${isReady ? 'border-emerald-400/45' : 'border-white/10'}">
+            <div class="flex items-start justify-between gap-2.5">
+              <div class="min-w-0 flex-1">
+                <div class="text-sm font-extrabold text-white">${q.title}</div>
+                <p class="text-xs text-slate-300 mt-0.5">${q.desc}</p>
+              </div>
+              <span class="shrink-0 px-2 py-1 rounded-xl bg-amber-400/15 border border-amber-400/30 text-xs font-black text-amber-300">
+                +${formatNumber(q.rewardCoins)} RVC
+              </span>
+            </div>
 
-            if (tg && typeof tg.openLink === 'function') {
-                tg.openLink(gameUrl.href);
-            } else {
-                window.location.href = gameUrl.href;
-            }
-        };
+            <div class="mt-3 flex items-center justify-between gap-3">
+              <div class="flex-1">
+                <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                  <span>Прогресс</span>
+                  <span>${formatNumber(current)} / ${formatNumber(q.target)}</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
+                  <div class="h-full rounded-full ${
+                    claimed
+                      ? 'bg-slate-600'
+                      : isReady
+                        ? 'bg-gradient-to-r from-emerald-400 to-cyan-400'
+                        : 'bg-gradient-to-r from-purple-500 to-pink-500'
+                  }" style="width: ${pct}%"></div>
+                </div>
+              </div>
 
-        window.switchTab = function(tabName, element) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+              ${
+                claimed
+                  ? `<span class="px-3 py-1.5 rounded-xl bg-white/5 text-[11px] font-bold text-slate-400">Получено</span>`
+                  : isReady
+                    ? `<button type="button" onclick="claimQuest('${q.id}')" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 text-xs font-black shadow-md shadow-emerald-500/25 active:scale-95 transition">
+                        Забрать
+                       </button>`
+                    : `<span class="px-2.5 py-1.5 rounded-xl bg-slate-800/80 text-[11px] font-bold text-slate-400">${pct}%</span>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
 
-            document.getElementById(`tab-${tabName}`).classList.add('active');
-            element.classList.add('active');
-        };
+      const badge = document.getElementById('quests-ready-badge');
+      const dot = document.getElementById('quests-badge-dot');
+      if (badge) badge.textContent = `${readyCount} готово`;
+      if (dot) {
+        if (readyCount > 0) {
+          dot.classList.remove('hidden');
+          dot.textContent = String(readyCount);
+        } else {
+          dot.classList.add('hidden');
+        }
+      }
+    }
 
-        window.addEventListener('focus', loadUserData);
+    function updateUI(now = Date.now()) {
+      const rankInfo = getCurrentRank(state.coins);
+      document.getElementById('player-rank-title').textContent = `${rankInfo.badge} ${rankInfo.title}`;
 
-        loadUserData();
-    </script>
+      const xpNeeded = getXpForNextLevel(state.level);
+      const xpPct = Math.min(100, Math.round((state.xp / xpNeeded) * 100));
+      document.getElementById('header-level-badge').textContent = `LVL ${state.level}`;
+      document.getElementById('xp-label').textContent = `${formatNumber(state.xp)} / ${formatNumber(xpNeeded)} XP`;
+      document.getElementById('xp-bar-fill').style.width = `${xpPct}%`;
+
+      const passiveSec = getPassiveIncomePerSec(now);
+      document.getElementById('passive-income-label').textContent = `+${formatNumber(passiveSec)} RVC/сек`;
+
+      document.getElementById('coins-display').textContent = formatNumber(state.coins);
+      const tapVal = getTapValue(now);
+      const isTurbo = state.turboUntil > now;
+      const isX2 = state.x2Until > now;
+      document.getElementById('per-tap-badge').textContent = `+${formatNumber(tapVal)} RVC за тап`;
+      document.getElementById('crit-chance-badge').textContent = `Крит x5: ${isTurbo ? '18%' : '10%'}`;
+
+      const banner = document.getElementById('active-boosts-banner');
+      const pills = [];
+      if (isTurbo) {
+        const sec = Math.ceil((state.turboUntil - now) / 1000);
+        pills.push(`<span class="px-2.5 py-1 rounded-xl bg-fuchsia-500/25 border border-fuchsia-400/45 text-[11px] font-extrabold text-fuchsia-200 animate-pulse">🚀 Турбо-кран x3: ${sec}с</span>`);
+      }
+      if (isX2) {
+        const sec = Math.ceil((state.x2Until - now) / 1000);
+        pills.push(`<span class="px-2.5 py-1 rounded-xl bg-amber-500/25 border border-amber-400/45 text-[11px] font-extrabold text-amber-200">🔥 Бонус x2: ${sec}с</span>`);
+      }
+      if (pills.length > 0) {
+        banner.innerHTML = pills.join('');
+        banner.classList.remove('hidden');
+      } else {
+        banner.innerHTML = '';
+        banner.classList.add('hidden');
+      }
+
+      document.getElementById('sound-toggle-btn').textContent = state.soundEnabled ? '🔊' : '🔇';
+
+      document.getElementById('stat-total-taps').textContent = formatNumber(state.totalTaps);
+      document.getElementById('stat-artifacts-count').textContent = `${state.unlockedArtifacts.length} / ${ARTIFACT_DEFS.length}`;
+      document.getElementById('stat-regen-rate').textContent = `+${state.energyRegen}/с`;
+
+      const energyPct = Math.max(0, Math.min(100, (state.energy / state.maxEnergy) * 100));
+      document.getElementById('energy-text').textContent = `${Math.floor(state.energy)} / ${state.maxEnergy}`;
+      document.getElementById('energy-bar-fill').style.width = `${energyPct}%`;
+      document.getElementById('refill-cost-label').textContent = formatNumber(getRefillCost());
+
+      // Хаб мини-игр рекорды
+      const aimBestEl = document.getElementById('hub-aim-best');
+      const cardsWinsEl = document.getElementById('hub-cards-wins');
+      if (aimBestEl) aimBestEl.textContent = String(state.aimBest);
+      if (cardsWinsEl) cardsWinsEl.textContent = String(state.cardsWins);
+
+      // Бусты
+      document.getElementById('boosts-balance-label').textContent = `${formatNumber(state.coins)} RVC`;
+      const turboBtn = document.getElementById('activate-turbo-btn');
+      const turboStatus = document.getElementById('turbo-status-text');
+      const turboCost = getTurboCost();
+      if (isTurbo) {
+        const sec = Math.ceil((state.turboUntil - now) / 1000);
+        turboStatus.textContent = `Активен ещё ${sec} сек!`;
+        turboStatus.className = 'text-xs font-extrabold text-fuchsia-300';
+        turboBtn.textContent = `Активно (${sec}с)`;
+        turboBtn.className = 'px-4 py-2 rounded-xl bg-fuchsia-950/80 border border-fuchsia-400/40 text-xs font-black text-fuchsia-200';
+      } else if (state.turboCooldownUntil > now) {
+        const cdSec = Math.ceil((state.turboCooldownUntil - now) / 1000);
+        turboStatus.textContent = `Перезарядка: ${cdSec} сек`;
+        turboStatus.className = 'text-xs font-bold text-amber-300';
+        turboBtn.textContent = `Ждём ${cdSec}с`;
+        turboBtn.className = 'px-4 py-2 rounded-xl bg-slate-800 text-slate-400 border border-white/10 text-xs font-black cursor-not-allowed';
+      } else {
+        turboStatus.textContent = 'Готов к запуску';
+        turboStatus.className = 'text-xs font-bold text-emerald-300';
+        turboBtn.textContent = `Запустить (${formatNumber(turboCost)} RVC)`;
+        turboBtn.className = `px-4 py-2 rounded-xl text-xs font-black transition active:scale-95 ${
+          state.coins >= turboCost
+            ? 'bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-500 text-white shadow-lg shadow-purple-500/30 hover:brightness-110'
+            : 'bg-slate-800 text-slate-500 border border-white/5'
+        }`;
+      }
+
+      // Сундук наград
+      const chestReady = state.lastChestTime === 0 || (now - state.lastChestTime >= CHEST_COOLDOWN_MS);
+      const chestIcon = document.getElementById('mystery-chest-icon');
+      const chestTimer = document.getElementById('chest-timer-label');
+      const chestBtn = document.getElementById('open-chest-btn');
+      const perksDot = document.getElementById('perks-dot');
+      const perksDotStatic = document.getElementById('perks-dot-static');
+
+      if (chestReady) {
+        chestIcon.classList.add('chest-shake');
+        chestTimer.textContent = 'Сундук доступен прямо сейчас!';
+        chestTimer.className = 'text-xs font-extrabold text-emerald-300';
+        chestBtn.textContent = 'Открыть сундук';
+        chestBtn.className = 'px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 hover:brightness-110 active:scale-95 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/30 transition';
+        perksDot?.classList.remove('hidden');
+        perksDotStatic?.classList.remove('hidden');
+      } else {
+        chestIcon.classList.remove('chest-shake');
+        const leftSec = Math.ceil((CHEST_COOLDOWN_MS - (now - state.lastChestTime)) / 1000);
+        chestTimer.textContent = `Следующий через ${leftSec} сек`;
+        chestTimer.className = 'text-xs font-bold text-slate-400';
+        chestBtn.textContent = `${leftSec}с`;
+        chestBtn.className = 'px-4 py-2.5 rounded-xl bg-slate-800 text-slate-400 border border-white/10 text-xs font-black cursor-not-allowed';
+        perksDot?.classList.add('hidden');
+        perksDotStatic?.classList.add('hidden');
+      }
+
+      document.getElementById('collection-progress-badge').textContent = `${state.unlockedArtifacts.length} / ${ARTIFACT_DEFS.length}`;
+      state.balance = state.coins; state.tapValue = state.baseTapPower;
+      updateLegacyUI();
+
+      if (currentTab === 'hub') {
+        renderLeaderboard();
+      } else if (currentTab === 'boosts') {
+        renderUpgradesList();
+      } else if (currentTab === 'perks') {
+        renderArtifactsGrid();
+      } else if (currentTab === 'quests') {
+        renderQuestsList();
+      } else {
+        let ready = 0;
+        for (const q of QUEST_DEFS) {
+          if (!state.claimedQuests.includes(q.id) && getQuestProgress(q) >= q.target) ready += 1;
+        }
+        const dot = document.getElementById('quests-badge-dot');
+        if (dot) {
+          if (ready > 0) {
+            dot.classList.remove('hidden');
+            dot.textContent = String(ready);
+          } else {
+            dot.classList.add('hidden');
+          }
+        }
+      }
+    }
+
+    /**
+     * =========================================================================
+     * ИГРОВОЙ ЦИКЛ И ПРИВЯЗКА СОБЫТИЙ
+     * =========================================================================
+     */
+
+    let lastTickTime = Date.now();
+    let autosaveCounter = 0;
+
+    function startGameLoop() {
+      setInterval(() => {
+        const now = Date.now();
+        const dt = Math.min(2, (now - lastTickTime) / 1000);
+        lastTickTime = now;
+
+        if (state.energy < state.maxEnergy) {
+          const regenSpeed = state.turboUntil > now ? state.energyRegen * 3 : state.energyRegen;
+          state.energy = Math.min(state.maxEnergy, state.energy + regenSpeed * dt);
+        }
+
+        const passiveRate = getPassiveIncomePerSec(now);
+        if (passiveRate > 0) {
+          state.coins += passiveRate * dt;
+        }
+
+        updateUI(now);
+
+        autosaveCounter += 1;
+        if (autosaveCounter >= 10) {
+          autosaveCounter = 0;
+          saveState();
+        }
+      }, 200);
+    }
+
+    function bindEvents() {
+      setupTapListeners();
+
+      document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          switchTab(btn.dataset.tab);
+        });
+      });
+
+      document.getElementById('sound-toggle-btn').addEventListener('click', () => {
+        state.soundEnabled = !state.soundEnabled;
+        saveState();
+        updateUI();
+        showToast(state.soundEnabled ? '🔊 Звуковые эффекты включены' : '🔇 Звук выключен', 'info');
+      });
+
+      document.getElementById('quick-refill-btn').addEventListener('click', refillEnergy);
+      document.getElementById('activate-turbo-btn').addEventListener('click', activateTurbo);
+      document.getElementById('open-chest-btn').addEventListener('click', openMysteryChest);
+
+      document.getElementById('close-chest-modal-btn').addEventListener('click', () => {
+        document.getElementById('chest-reward-modal').classList.add('hidden');
+      });
+
+      document.getElementById('open-aim-game-btn').addEventListener('click', openAimGame);
+      document.getElementById('close-aim-modal-btn').addEventListener('click', closeAimGame);
+
+      document.getElementById('open-cards-game-btn').addEventListener('click', openCardsGame);
+      document.getElementById('close-cards-modal-btn').addEventListener('click', closeCardsGame);
+      document.getElementById('cards-replay-btn').addEventListener('click', initCardsRound);
+
+      window.addEventListener('pagehide', () => { if(firebaseReady) saveState(); });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      bindEvents();
+      updateUI();
+      await loadState();
+      startGameLoop();
+      setInterval(() => processPassiveIncome().then(() => { updateUI(); updateLegacyUI(); }), 30000);
+    });
+  
+</script>
 </body>
 </html>
