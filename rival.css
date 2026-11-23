@@ -88,3 +88,5 @@ nav button[aria-pressed=true] { background: #36224f; color: #f5dcff; font-weight
   .core, .core img { animation: none; transition: none; }
   .tap-pop { animation: none; }
 }
+
+.game-link.life {color:#eff9ed;text-decoration:none;background:linear-gradient(125deg,#15382e,#345c44 72%,#687c48)}

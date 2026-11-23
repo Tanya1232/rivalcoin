@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#132c25"><title>Свой путь · RivalCoin</title><link rel="stylesheet" href="./life.css"><script src="https://telegram.org/js/telegram-web-app.js"></script><script type="module" src="./life.js"></script></head>
+<body><main>
+<header><a href="../">‹ RivalCoin</a><div id="clock"><strong id="time"></strong><span id="date"></span></div></header>
+<section class="hero"><div><p class="eyebrow">СИМУЛЯТОР ЖИЗНИ</p><h1>Свой<br>путь<span>.</span></h1><p>Учёба, работа и планы на завтра. Каждый день идёт по настоящим часам.</p></div><div class="sun" aria-hidden="true"></div></section>
+<p id="status" role="status">Загружаем профиль…</p>
+<form id="setup" class="panel" hidden>
+<h2>Создай персонажа</h2><p>Тебе 18 лет. Выбери, с чего начать.</p>
+<label>Имя<input name="name" maxlength="24" required placeholder="Имя персонажа" autocomplete="off"></label>
+<label>Пол<select name="gender"><option value="m">Парень</option><option value="f">Девушка</option></select></label>
+<label>Направление<select name="track"><option value="tech">Колледж технологий</option><option value="design">Школа дизайна</option><option value="business">Колледж бизнеса</option></select></label>
+<button class="primary" type="submit">Начать жизнь</button>
+</form>
+<div id="game" hidden>
+<section class="panel profile"><div><p class="eyebrow" id="track"></p><h2 id="name"></h2><p id="career"></p></div><div class="money"><strong id="cash"></strong><span>личный бюджет</span></div></section>
+<section class="panel" aria-label="Самочувствие"><div id="needs"></div></section>
+<section id="activity" class="panel" hidden><h2 id="activity-name"></h2><p id="activity-time"></p><progress id="activity-bar" max="1"></progress><button id="cancel" type="button">Отменить</button></section>
+<nav aria-label="Разделы"><button data-tab="career" aria-pressed="true">Карьера</button><button data-tab="home" aria-pressed="false">Самочувствие</button><button data-tab="daily" aria-pressed="false">Награды</button></nav>
+<section class="panel" data-page="career"><h2>Учёба и работа</h2><p id="career-progress"></p><div id="career-actions" class="actions"></div></section>
+<section class="panel" data-page="home" hidden><h2>Позаботься о себе</h2><div id="home-actions" class="actions"></div></section>
+<section class="panel" data-page="daily" hidden><h2>Награды дня</h2><p>До 50 RVC за день. Новый день наград начинается в 00:00 UTC.</p><ul id="daily-goals"></ul><button class="primary" id="claim">Получить RVC</button></section>
+</div></main></body></html>
