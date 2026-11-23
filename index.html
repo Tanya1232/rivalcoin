@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>RivalCoin</title>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -314,24 +314,68 @@
                 padding-top: 6px;
             }
         }
+
+        body {
+            color-scheme: dark;
+            background: radial-gradient(ellipse at 50% 22%, #302047, transparent 55%), #0b101e;
+            padding-top: env(safe-area-inset-top);
+        }
+        .header { padding-bottom: 6px; }
+        .brand-title { color: #ffd681; font-size: 13px; }
+        .balance-value { font-variant-numeric: tabular-nums; }
+        .tab-content { min-height: 0; justify-content: flex-start; }
+        .tab-content > * { margin-block: auto; flex: 0 0 auto; }
+        .card-list { max-width: 510px; }
+        .card {
+            background: linear-gradient(145deg, #21243b, #161a2b);
+            border-color: #353852;
+            box-shadow: 0 12px 28px #07091255;
+        }
+        .card-sub { line-height: 1.45; color: #b6bfd2; }
+        .action-btn { min-height: 42px; color: #241505; background: linear-gradient(135deg, #ffe08a, #f4ae44); }
+        .action-btn:disabled { opacity: .55; }
+        .big-coin-btn {
+            width: clamp(132px, min(54vw, 42dvh), 250px);
+            height: auto; aspect-ratio: 1;
+            background: radial-gradient(circle at 34% 24%, #fff0a8, #f1ac36 49%, #a95919 100%);
+            border: 5px double #fff2af;
+            box-shadow: inset 0 0 0 8px #9c501b45, 0 14px 0 -6px #9e591b, 0 24px 55px #efa53f55;
+        }
+        .big-coin-symbol { color: #54260d; text-shadow: 0 1px #fff0a6; }
+        .nav-bar { justify-content: center; gap: 2px; }
+        .nav-item {
+            width: min(calc((100% - 10px) / 6), 88px); min-height: 45px;
+            border: 0; border-radius: 12px; padding: 4px 0;
+            background: transparent; justify-content: center;
+        }
+        .nav-item.active { background: #f2ad341a; color: #ffd478; }
+        .nav-icon { font-size: 18px; }
+        button:focus-visible { outline: 2px solid #fff3ab; outline-offset: 3px; }
+        #sync-status { min-height: 1.3em; color: #c0c8db; font-size: 12px; margin-top: 4px; }
+        #referral-link-text { user-select: text; -webkit-user-select: text; }
+        @media (prefers-reduced-motion: reduce) {
+            .tap-pop { animation: none; }
+            .big-coin-btn, .energy-bar-fill { transition: none; }
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="brand-title">RIVAL ECOSYSTEM</div>
+        <h1 class="brand-title">RivalCoin</h1>
         <div class="balance-container">
             <div class="coin-icon-small">R</div>
             <div class="balance-value" id="balance">0</div>
         </div>
+        <p id="sync-status" role="status">Загружаем баланс…</p>
     </div>
 
     <!-- RivalCoin -->
     <div class="tab-content active" id="tab-tapper">
         <div class="tapper-area">
-            <div class="big-coin-btn" id="coin-btn">
-                <span class="big-coin-symbol">R</span>
-            </div>
+            <button type="button" class="big-coin-btn" id="coin-btn" aria-label="Заработать RIVAL" disabled>
+                <span class="big-coin-symbol" aria-hidden="true">R</span>
+            </button>
 
             <div class="energy-box">
                 <div class="energy-info">
@@ -364,7 +408,7 @@
                     <div class="card-icon">🎯</div>
                     <div>
                         <div class="card-title">Strike Arena 3D</div>
-                        <div class="card-sub">Играй и зарабатывай RIVAL!</div>
+                        <div class="card-sub">Тренировочный полигон с движущимися целями</div>
                     </div>
                 </div>
                 <button class="action-btn" onclick="launchGame('https://tanya1232.github.io/strike-arena-3d/')">ИГРАТЬ</button>
@@ -468,7 +512,7 @@
     </div>
 
     <!-- Нижнее меню -->
-    <div class="nav-bar">
+    <nav class="nav-bar" aria-label="Разделы RivalCoin">
         <div class="nav-item active" onclick="switchTab('tapper', this)">
             <div class="nav-icon">🪙</div>
             <span>RivalCoin</span>
@@ -493,13 +537,46 @@
             <div class="nav-icon">👛</div>
             <span>Кошелек</span>
         </div>
-    </div>
+    </nav>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import {
-            getFirestore, doc, getDoc, setDoc, runTransaction
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+﻿        const telegram = window.Telegram?.WebApp;
+        telegram?.ready();
+        telegram?.expand();
+
+        const bot = 'RivalCoin_bot';
+        const hour = 3600000;
+        const defaults = {
+            balance: 0, energy: 1000, maxEnergy: 1000, tapValue: 1,
+            multitapCost: 100, energyCost: 200, lastEnergyUpdate: Date.now(),
+            username: telegram?.initDataUnsafe?.user?.username || 'Player',
+            passiveStartedAt: 0, passiveLastRewardAt: 0, passiveEndAt: 0,
+            passiveHoursGranted: 0, passiveHoursPaid: 0, groupRewardClaimed: false
+        };
+        const status = document.getElementById('sync-status');
+        const coin = document.getElementById('coin-btn');
+        const passiveButton = document.getElementById('activate-passive-btn');
+        const purchases = [...document.querySelectorAll('#tab-boosts button')];
+        const groupButton = document.querySelector('[onclick="joinGroup()"]');
+        const referralButton = document.querySelector('[onclick="copyReferralLink()"]');
+        const gameButtons = [...document.querySelectorAll('[onclick^="launchGame"]')];
+
+        let userId = telegram?.initDataUnsafe?.user?.id;
+        if (!userId) {
+            try {
+                userId = localStorage.getItem('rival_demo_uid');
+                if (!/^demo_\d+$/.test(userId ?? '')) {
+                    userId = 'demo_' + crypto.getRandomValues(new Uint32Array(1))[0];
+                    localStorage.setItem('rival_demo_uid', userId);
+                }
+            } catch {
+                userId = null;
+            }
+        }
+        const referral = telegram?.initDataUnsafe?.start_param ||
+            new URLSearchParams(location.search).get('ref');
+        const referralLink = 'https://t.me/' + bot + '?startapp=' + encodeURIComponent(userId ?? '');
+        document.getElementById('referral-link-text').textContent = userId ? referralLink : 'Откройте RivalCoin в Telegram';
 
         const firebaseConfig = {
             apiKey: "AIzaSyDfnuR07pt2IIWCScmI7H4aSy57XIHZpHg",
@@ -510,506 +587,284 @@
             appId: "1:53292984166:web:63d508b16bb8c04affcaa7"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        // Telegram bot username used for referral deep links (without @).
-        const TELEGRAM_BOT_USERNAME = "RivalCoin_bot";
-        const ADSGRAM_BLOCK_ID = "59640";
-        let adsgramController = null;
+        let db, userRef, doc, runTransaction;
+        let state = { ...defaults };
+        let pendingTaps = 0;
+        let ready = false;
+        let syncing = false;
+        let showingAd = false;
+        let ads;
+        let pendingAd = false;
+        let lastSyncFailed = false;
+        let booting = false;
 
-        const tg = window.Telegram ? window.Telegram.WebApp : null;
-
-        if (tg) {
-            tg.ready();
-            tg.expand();
-        }
-
-        let userId = tg?.initDataUnsafe?.user?.id;
-
-        if (!userId) {
-            userId = localStorage.getItem('rival_demo_uid');
-
-            if (!userId) {
-                userId = 'demo_' + Math.floor(Math.random() * 1000000);
-                localStorage.setItem('rival_demo_uid', userId);
+        function normalize(cloud, now) {
+            const current = { ...defaults, lastEnergyUpdate: now, ...cloud };
+            for (const key of Object.keys(defaults)) {
+                if (typeof defaults[key] !== 'number') continue;
+                const value = Number(current[key]);
+                current[key] = Number.isSafeInteger(value) && value >= 0 ? value : defaults[key];
             }
-        }
+            current.maxEnergy = Math.max(1000, current.maxEnergy);
+            for (const key of ['tapValue', 'multitapCost', 'energyCost']) {
+                current[key] = Math.max(defaults[key], current[key]);
+            }
+            const lastUpdate = Math.min(current.lastEnergyUpdate || now, now);
+            const elapsed = Math.floor((now - lastUpdate) / 1000);
+            current.energy = Math.min(current.maxEnergy, current.energy + elapsed * 3);
+            current.lastEnergyUpdate = current.energy === current.maxEnergy ? now : lastUpdate + elapsed * 1000;
 
-        const userDocRef = doc(db, "users", String(userId));
-
-        let isDirty = false;
-        let isLoadingUser = false;
-        let state = {
-            balance: 0,
-            energy: 1000,
-            maxEnergy: 1000,
-            tapValue: 1,
-            multitapCost: 100,
-            energyCost: 200,
-            username: tg?.initDataUnsafe?.user?.username || 'Player',
-            lastEnergyUpdate: Date.now(),
-            passiveRunHours: 0,
-            passiveRunStartedAt: 0,
-            passiveHoursGranted: 0,
-            passiveHoursPaid: 0,
-            passiveEndAt: 0,
-            groupRewardClaimed: false
-        };
-
-        async function loadUserData() {
-            if (isLoadingUser) return;
-            isLoadingUser = true;
-
-            try {
-                const snap = await getDoc(userDocRef);
-
-                if (snap.exists()) {
-                    const cloudData = snap.data();
-                    state = { ...state, ...cloudData };
-
-                    // Максимальная энергия берётся из Firestore и никогда не откатывается
-                    // к стартовым 1000 из локального шаблона.
-                    const savedMaxEnergy = Number(cloudData.maxEnergy);
-                    state.maxEnergy = Number.isFinite(savedMaxEnergy) && savedMaxEnergy > 0
-                        ? Math.max(1000, savedMaxEnergy)
-                        : Math.max(1000, Number(state.maxEnergy) || 1000);
-                    state.energy = Math.max(0, Math.min(
-                        state.maxEnergy,
-                        Number.isFinite(Number(cloudData.energy)) ? Number(cloudData.energy) : state.maxEnergy
-                    ));
-                } else {
-                    state.lastEnergyUpdate = Date.now();
-                    await setDoc(userDocRef, state);
-                    await processReferral();
+            const granted = current.passiveHoursGranted = Math.min(12, current.passiveHoursGranted);
+            const paid = current.passiveHoursPaid = Math.min(granted, current.passiveHoursPaid);
+            if (granted && current.passiveStartedAt && current.passiveEndAt) {
+                const lastReward = current.passiveLastRewardAt || current.passiveStartedAt + paid * hour;
+                const earned = Math.min(granted - paid, Math.max(0,
+                    Math.floor((Math.min(now, current.passiveEndAt) - lastReward) / hour)));
+                current.balance += earned * 100;
+                current.passiveHoursPaid += earned;
+                current.passiveLastRewardAt = lastReward + earned * hour;
+            }
+            if (current.passiveEndAt <= now && current.passiveHoursPaid >= granted) {
+                for (const key of ['passiveStartedAt','passiveLastRewardAt','passiveEndAt','passiveHoursGranted','passiveHoursPaid']) {
+                    current[key] = 0;
                 }
-
-                const now = Date.now();
-
-                // Миграция сохранений со старой системой выбора 1–10 часов.
-                // Инициализация новых полей фарма без сброса уже сохранённых данных.
-                state.passiveHoursGranted = Math.max(0, Math.min(12, Number(state.passiveHoursGranted) || 0));
-                state.passiveHoursPaid = Math.max(0, Number(state.passiveHoursPaid) || 0);
-                state.passiveEndAt = Number(state.passiveEndAt) || 0;
-
-                const lastEnergy = Number(state.lastEnergyUpdate) || now;
-                const elapsed = Math.max(0, Math.floor((now - lastEnergy) / 1000));
-
-                state.energy = Math.min(
-                    Number(state.maxEnergy) || 1000,
-                    (Number(state.energy) || 0) + elapsed * 3
-                );
-
-                state.lastEnergyUpdate = now;
-
-                await processPassiveIncome();
-                await saveUserData();
-                updateUI();
-                updateReferralUI();
-                updatePassiveUI();
-            } catch (error) {
-                console.error("Ошибка загрузки данных из Firestore:", error);
-            } finally {
-                isLoadingUser = false;
             }
+            return current;
         }
 
-        async function processReferral() {
-            const params = new URLSearchParams(window.location.search);
-            const referrerId = params.get('ref') || tg?.initDataUnsafe?.start_param || '';
-
-            if (!referrerId || String(referrerId) === String(userId)) return;
-
-            const referrerRef = doc(db, 'users', String(referrerId));
-
+        // Apply an action to the latest cloud balance, including runner rewards.
+        async function sync(action, message) {
+            if (!userRef || syncing) return false;
+            syncing = true;
+            const tapCount = pendingTaps;
+            const now = Date.now();
+            render();
+            let committed = false;
             try {
-                await runTransaction(db, async (transaction) => {
-                    const newUserSnap = await transaction.get(userDocRef);
-                    if (!newUserSnap.exists()) return;
+                const result = await runTransaction(db, async transaction => {
+                    const snapshot = await transaction.get(userRef);
+                    const cloud = snapshot.data() ?? {};
+                    const next = normalize(cloud, now);
+                    const firstVisit = !Object.hasOwn(cloud, 'username') && !cloud.referralProcessed;
+                    let inviterRef, inviter;
+                    if (firstVisit && /^\d{1,20}$/.test(referral ?? '') && String(userId) !== referral) {
+                        inviterRef = doc(db, 'users', referral);
+                        inviter = await transaction.get(inviterRef);
+                    }
 
-                    const newUserData = newUserSnap.data();
+                    const accepted = Math.min(tapCount, Math.floor(next.energy / next.tapValue));
+                    const earned = accepted * next.tapValue;
+                    next.balance += earned;
+                    next.energy -= earned;
+                    if (accepted && next.energy + earned === next.maxEnergy) next.lastEnergyUpdate = now;
+                    const applied = action ? action(next, now) : true;
 
-                    if (newUserData.referredBy || newUserData.referralProcessed) return;
-
-                    const referrerSnap = await transaction.get(referrerRef);
-                    if (!referrerSnap.exists()) return;
-
-                    const referrerData = referrerSnap.data();
-
-                    transaction.update(referrerRef, {
-                        balance: (Number(referrerData.balance) || 0) + 10000
-                    });
-
-                    transaction.update(userDocRef, {
-                        referredBy: String(referrerId),
-                        referralProcessed: true
-                    });
+                    if (inviter?.exists()) {
+                        transaction.update(inviterRef, { balance: (Number(inviter.data().balance) || 0) + 10000 });
+                        next.referredBy = referral;
+                        next.referralProcessed = true;
+                    }
+                    const changes = Object.fromEntries(Object.entries(next).filter(([key, value]) => cloud[key] !== value));
+                    if (Object.keys(changes).length) transaction.set(userRef, changes, { merge: true });
+                    return { next, applied, accepted };
                 });
+                state = result.next;
+                pendingTaps -= tapCount;
+                ready = true;
+                lastSyncFailed = false;
+                committed = true;
+                status.textContent = result.accepted < tapCount ? 'Часть нажатий пропущена: энергия изменилась'
+                    : result.applied ? (message || '') : 'Действие сейчас недоступно';
             } catch (error) {
-                console.error('Ошибка обработки реферала:', error);
-            }
-        }
-
-        function makeReferralLink() {
-            // startapp передаёт ID пригласившего в Telegram Mini App как start_param.
-            return `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=${encodeURIComponent(String(userId))}`;
-        }
-
-        function updateReferralUI() {
-            const text = document.getElementById('referral-link-text');
-            if (text) text.textContent = makeReferralLink();
-        }
-
-        window.copyReferralLink = async function() {
-            const link = makeReferralLink();
-
-            try {
-                await navigator.clipboard.writeText(link);
-                alert('Ссылка скопирована!');
-            } catch (error) {
-                const text = document.getElementById('referral-link-text');
-                if (text) {
-                    const range = document.createRange();
-                    range.selectNodeContents(text);
-                    const selection = window.getSelection();
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                }
-                alert('Выдели ссылку и скопируй её.');
-            }
-        };
-
-        window.joinGroup = async function() {
-            if (state.groupRewardClaimed) {
-                window.open('https://t.me/ProRivalArena', '_blank', 'noopener');
-                return;
-            }
-
-            state.groupRewardClaimed = true;
-            state.balance = (Number(state.balance) || 0) + 5000;
-
-            await saveUserData();
-            updateUI();
-
-            alert('Поздравляем! Вам начислено 5 000 RIVAL!');
-            window.open('https://t.me/ProRivalArena', '_blank', 'noopener');
-        };
-
-        function getPassiveTimes() {
-            return {
-                startedAt: Number(state.passiveStartedAt) || 0,
-                lastRewardAt: Number(state.passiveLastRewardAt) || 0,
-                endAt: Number(state.passiveEndAt) || 0,
-                hoursGranted: Math.max(0, Math.min(12, Number(state.passiveHoursGranted) || 0)),
-                hoursPaid: Math.max(0, Number(state.passiveHoursPaid) || 0)
-            };
-        }
-
-        function updatePassiveUI() {
-            const { startedAt, lastRewardAt, endAt, hoursGranted, hoursPaid } = getPassiveTimes();
-            const now = Date.now();
-            const active = startedAt > 0 && endAt > now;
-            const busy = Boolean(window._rivalAdsgramBusy);
-            const button = document.getElementById('activate-passive-btn');
-            const slot = document.getElementById('passive-slots-status');
-            const pending = document.getElementById('passive-pending-status');
-            const remainingAds = Math.max(0, 12 - hoursGranted);
-
-            if (slot) {
-                slot.textContent = `Просмотров: ${hoursGranted} / 12 · Начислено часов: ${hoursPaid} / ${hoursGranted}`;
-            }
-
-            if (pending) {
-                if (active) {
-                    const remainingMs = Math.max(0, endAt - now);
-                    const minutes = Math.ceil(remainingMs / 60000);
-                    const h = Math.floor(minutes / 60);
-                    const m = minutes % 60;
-                    pending.textContent = `Фарм активен · осталось ${h} ч ${m} мин · +100 RIVAL за каждый полный час`;
-                } else if (hoursGranted > hoursPaid) {
-                    pending.textContent = 'Ожидается начисление оставшихся часов фарма.';
-                } else {
-                    pending.textContent = 'Посмотри рекламу — получишь +1 час фарма. Можно добавить до 12 часов.';
-                }
-            }
-
-            if (button) {
-                const limitReached = hoursGranted >= 12 && (active || hoursPaid < hoursGranted);
-                button.disabled = busy || limitReached;
-                button.textContent = busy ? 'ЗАГРУЗКА РЕКЛАМЫ…' :
-                    (limitReached ? 'ЛИМИТ 12 ЧАСОВ ДОСТИГНУТ' : 'СМОТРЕТЬ РЕКЛАМУ · +1 ЧАС');
-                button.style.opacity = button.disabled ? '0.6' : '1';
-            }
-        }
-
-        function getAdsgramController() {
-            if (adsgramController) return adsgramController;
-            if (!window.Adsgram || typeof window.Adsgram.init !== 'function') {
-                throw new Error('AdsGram SDK не загрузился');
-            }
-            adsgramController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID, debug: false });
-            return adsgramController;
-        }
-
-        window.activatePassiveSlot = async function() {
-            // Сначала начисляем уже завершённые часы, чтобы новый цикл не затёр старую награду.
-            await processPassiveIncome();
-            const { startedAt, endAt, hoursGranted, hoursPaid } = getPassiveTimes();
-            const now = Date.now();
-            const sessionActive = startedAt > 0 && endAt > now;
-            const sessionNotFinished = startedAt > 0 && hoursPaid < hoursGranted;
-
-            if (window._rivalAdsgramBusy || hoursGranted >= 12 && (sessionActive || sessionNotFinished)) {
-                updatePassiveUI();
-                return;
-            }
-
-            window._rivalAdsgramBusy = true;
-            updatePassiveUI();
-
-            try {
-                const controller = getAdsgramController();
-                const result = await controller.show();
-                if (result && result.done === false) {
-                    throw new Error('Реклама не была досмотрена');
-                }
-
-                const completedAt = Date.now();
-                const stillActive = Number(state.passiveEndAt) > completedAt;
-                const currentGranted = stillActive ? Math.max(0, Number(state.passiveHoursGranted) || 0) : 0;
-                const currentPaid = stillActive ? Math.max(0, Number(state.passiveHoursPaid) || 0) : 0;
-
-                if (currentGranted >= 12) {
-                    alert('Лимит в 12 часов фарма уже достигнут. Дождись завершения текущего цикла.');
-                    return;
-                }
-
-                if (!stillActive) {
-                    state.passiveStartedAt = completedAt;
-                    state.passiveLastRewardAt = completedAt;
-                    state.passiveHoursGranted = 1;
-                    state.passiveHoursPaid = 0;
-                    state.passiveEndAt = completedAt + 3600000;
-                } else {
-                    state.passiveHoursGranted = currentGranted + 1;
-                    state.passiveHoursPaid = currentPaid;
-                    state.passiveEndAt = Number(state.passiveEndAt) + 3600000;
-                }
-
-                await saveUserData();
-                updatePassiveUI();
-                alert('Готово! Добавлен 1 час фарма. За каждый полный час начисляется 100 RIVAL.');
-            } catch (error) {
-                console.warn('AdsGram rewarded ad was not completed:', error);
-                alert('Реклама не завершена или сейчас недоступна. Час фарма не добавлен.');
+                lastSyncFailed = true;
+                status.textContent = ready
+                    ? 'Не удалось сохранить. Проверьте соединение.'
+                    : 'Не удалось загрузить баланс. Повторяем…';
+                console.warn('RivalCoin: синхронизация', error);
             } finally {
-                window._rivalAdsgramBusy = false;
-                updatePassiveUI();
+                syncing = false;
+                render();
             }
-        };
+            return committed;
+        }
 
-        async function processPassiveIncome() {
-            const { startedAt, lastRewardAt, endAt, hoursGranted, hoursPaid } = getPassiveTimes();
-            if (!startedAt || !lastRewardAt || !endAt || hoursGranted <= hoursPaid) return;
-
+        function render() {
             const now = Date.now();
-            const effectiveNow = Math.min(now, endAt);
-            const elapsedFullHours = Math.floor(Math.max(0, effectiveNow - lastRewardAt) / 3600000);
-            const payableHours = Math.min(elapsedFullHours, hoursGranted - hoursPaid);
-            if (payableHours < 1) {
-                if (now >= endAt && hoursPaid >= hoursGranted) resetPassiveSession();
-                return;
-            }
+            const preview = normalize(state, now);
+            const optimistic = Math.min(preview.energy, pendingTaps * preview.tapValue);
+            const energy = preview.energy - optimistic;
+            const balance = preview.balance + optimistic;
+            document.getElementById('balance').textContent = ready ? balance.toLocaleString('ru-RU') : '…';
+            document.getElementById('energy-text').textContent = energy + ' / ' + preview.maxEnergy;
+            document.getElementById('energy-fill').style.width = (100 * energy / preview.maxEnergy) + '%';
+            document.getElementById('multitap-sub').textContent =
+                '+' + (state.tapValue + 1) + ' за тап · ' + state.multitapCost.toLocaleString('ru-RU') + ' RIVAL';
+            document.getElementById('energy-sub').textContent =
+                '+500 к максимуму · ' + state.energyCost.toLocaleString('ru-RU') + ' RIVAL';
+            coin.disabled = !ready || energy < preview.tapValue;
+            purchases[0].disabled = !ready || syncing || balance < state.multitapCost;
+            purchases[1].disabled = !ready || syncing || balance < state.energyCost;
+            groupButton.disabled = !ready || syncing;
+            referralButton.disabled = !userId;
+            gameButtons.forEach(button => { button.disabled = syncing && pendingTaps > 0; });
 
-            state.balance = (Number(state.balance) || 0) + payableHours * 100;
-            state.passiveHoursPaid = hoursPaid + payableHours;
-            state.passiveLastRewardAt = lastRewardAt + payableHours * 3600000;
-
-            if (state.passiveHoursPaid >= hoursGranted && now >= endAt) {
-                resetPassiveSession();
-            }
-
-            await saveUserData();
-            updateUI();
-            updatePassiveUI();
-            alert(`Пассивный доход: начислено ${payableHours * 100} RIVAL за ${payableHours} ч.`);
+            const remaining = Math.max(0, Math.ceil((state.passiveEndAt - now) / 60000));
+            document.getElementById('passive-slots-status').textContent =
+                'Просмотров: ' + state.passiveHoursGranted + ' / 12 · Начислено часов: ' + state.passiveHoursPaid;
+            document.getElementById('passive-pending-status').textContent = remaining
+                ? 'Осталось ' + Math.floor(remaining / 60) + ' ч ' + (remaining % 60) + ' мин'
+                : state.passiveHoursPaid < state.passiveHoursGranted ? 'Ожидаем начисление' : 'Фарм не запущен';
+            const limit = preview.passiveHoursGranted >= 12;
+            passiveButton.disabled = !ready || syncing || showingAd || (limit && !pendingAd);
+            passiveButton.textContent = showingAd ? 'РЕКЛАМА…' : pendingAd ? 'СОХРАНИТЬ ЧАС ФАРМА'
+                : limit ? 'ДОСТИГНУТ ЛИМИТ' : 'СМОТРЕТЬ РЕКЛАМУ · +1 ЧАС';
         }
 
-        function resetPassiveSession() {
-            state.passiveStartedAt = 0;
-            state.passiveLastRewardAt = 0;
-            state.passiveEndAt = 0;
-            state.passiveHoursGranted = 0;
-            state.passiveHoursPaid = 0;
-        }
-
-        setInterval(async () => {
-            try {
-                await processPassiveIncome();
-                updatePassiveUI();
-            } catch (error) {
-                console.error('Ошибка начисления пассивного дохода:', error);
-            }
-        }, 30000);
-
-        async function saveUserData() {
-            try {
-                // Транзакция читает актуальную запись. Если в облаке уже 4500 энергии,
-                // устаревшее локальное значение 1000 не сможет уменьшить максимум.
-                await runTransaction(db, async (transaction) => {
-                    const snap = await transaction.get(userDocRef);
-                    const cloud = snap.exists() ? snap.data() : {};
-                    const cloudMax = Number(cloud.maxEnergy) || 1000;
-                    const localMax = Number(state.maxEnergy) || 1000;
-                    const safeMaxEnergy = Math.max(1000, cloudMax, localMax);
-                    const safeEnergy = Math.max(0, Math.min(
-                        safeMaxEnergy,
-                        Number(state.energy) || 0
-                    ));
-
-                    const payload = {
-                        ...state,
-                        maxEnergy: safeMaxEnergy,
-                        energy: safeEnergy,
-                        lastEnergyUpdate: Number(state.lastEnergyUpdate) || Date.now()
-                    };
-                    transaction.set(userDocRef, payload, { merge: true });
-                    state.maxEnergy = safeMaxEnergy;
-                    state.energy = safeEnergy;
-                });
-            } catch (error) {
-                console.error("Ошибка сохранения в Firestore:", error);
-            }
-        }
-
-        function updateUI() {
-            const balanceEl = document.getElementById('balance');
-            const energyText = document.getElementById('energy-text');
-            const energyFill = document.getElementById('energy-fill');
-
-            balanceEl.innerText = (Number(state.balance) || 0).toLocaleString();
-            energyText.innerText = `${state.energy} / ${state.maxEnergy}`;
-
-            const percent = Math.max(0, Math.min(100, (state.energy / state.maxEnergy) * 100));
-            energyFill.style.width = `${percent}%`;
-
-            document.getElementById('multitap-sub').innerText =
-                `+${state.tapValue + 1} за тап | Цена: ${state.multitapCost}`;
-
-            document.getElementById('energy-sub').innerText =
-                `+500 к базе | Цена: ${state.energyCost}`;
-
-            updatePassiveUI();
-        }
-
-        const coinBtn = document.getElementById('coin-btn');
-
-        function handleTap(event) {
-            if (event.type === 'touchstart') event.preventDefault();
-
-            if (state.energy < state.tapValue) return;
-
-            state.energy -= state.tapValue;
-            state.balance += state.tapValue;
-            state.lastEnergyUpdate = Date.now();
-            isDirty = true;
-
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-
-            const rect = coinBtn.getBoundingClientRect();
-            let clientX = event.clientX;
-            let clientY = event.clientY;
-
-            if (event.touches && event.touches.length > 0) {
-                clientX = event.touches[0].clientX;
-                clientY = event.touches[0].clientY;
-            }
-
-            const x = (clientX || rect.left + rect.width / 2) - rect.left;
-            const y = (clientY || rect.top + rect.height / 2) - rect.top;
-
-            const pop = document.createElement('div');
+        coin.addEventListener('click', event => {
+            if (coin.disabled) return;
+            pendingTaps++;
+            telegram?.HapticFeedback?.impactOccurred('medium');
+            const rect = coin.getBoundingClientRect();
+            const pop = document.createElement('span');
             pop.className = 'tap-pop';
-            pop.textContent = `+${state.tapValue}`;
-            pop.style.left = `${x}px`;
-            pop.style.top = `${y}px`;
-
-            coinBtn.appendChild(pop);
+            pop.setAttribute('aria-hidden', 'true');
+            pop.textContent = '+' + state.tapValue;
+            pop.style.left = (event.detail ? event.clientX - rect.left : rect.width / 2) + 'px';
+            pop.style.top = (event.detail ? event.clientY - rect.top : rect.height / 2) + 'px';
+            coin.append(pop);
             setTimeout(() => pop.remove(), 800);
-
-            updateUI();
-        }
-
-        coinBtn.addEventListener('touchstart', handleTap, { passive: false });
-
-        coinBtn.addEventListener('click', function(event) {
-            // Не начисляем второй тап после touchstart на мобильных устройствах.
-            if (event.detail === 0) return;
-            if ('ontouchstart' in window) return;
-            handleTap(event);
+            render();
         });
 
-        // Восстановление энергии: 3 единицы в секунду, в том числе офлайн.
-        setInterval(() => {
-            if (state.energy < state.maxEnergy) {
-                state.energy = Math.min(state.maxEnergy, state.energy + 3);
-                state.lastEnergyUpdate = Date.now();
-                isDirty = true;
-                updateUI();
-            } else {
-                state.lastEnergyUpdate = Date.now();
-            }
-        }, 1000);
+        window.buyUpgrade = type => {
+            void sync(next => {
+                const multitap = type === 'multitap';
+                const costKey = multitap ? 'multitapCost' : 'energyCost';
+                const cost = next[costKey];
+                if (next.balance < cost || cost > Number.MAX_SAFE_INTEGER / 2) return false;
+                next.balance -= cost;
+                next[costKey] *= 2;
+                if (multitap) next.tapValue++;
+                else {
+                    next.maxEnergy += 500;
+                    next.energy += 500;
+                }
+                return true;
+            }, 'Улучшение куплено');
+        };
 
-        setInterval(() => {
-            if (isDirty) {
-                saveUserData();
-                isDirty = false;
+        window.copyReferralLink = async () => {
+            const referralStatus = document.getElementById('referral-status');
+            try {
+                await navigator.clipboard.writeText(referralLink);
+                referralStatus.textContent = 'Ссылка скопирована';
+            } catch {
+                referralStatus.textContent = 'Выделите и скопируйте ссылку выше';
             }
-        }, 3000);
+        };
 
-        window.buyUpgrade = async function(type) {
-            if (type === 'multitap' && state.balance >= state.multitapCost) {
-                state.balance -= state.multitapCost;
-                state.tapValue += 1;
-                state.multitapCost *= 2;
-            } else if (type === 'energy' && state.balance >= state.energyCost) {
-                state.balance -= state.energyCost;
-                state.maxEnergy += 500;
-                state.energy += 500;
-                state.energyCost *= 2;
-            } else {
+        window.joinGroup = () => {
+            const url = 'https://t.me/ProRivalArena';
+            if (telegram?.initData && telegram.openTelegramLink) telegram.openTelegramLink(url);
+            else window.open(url, '_blank', 'noopener');
+            if (state.groupRewardClaimed) return;
+            void sync(next => {
+                if (next.groupRewardClaimed) return false;
+                next.groupRewardClaimed = true;
+                next.balance += 5000;
+                return true;
+            }, 'Начислено 5 000 RIVAL');
+        };
+
+        window.activatePassiveSlot = async () => {
+            if (passiveButton.disabled) return;
+            if (!pendingAd) {
+                showingAd = true;
+                render();
+                try {
+                    ads ??= window.Adsgram.init({ blockId: '59640', debug: false });
+                    const result = await ads.show();
+                    if (!result?.done || result.error) throw new Error('Реклама не завершена');
+                    pendingAd = true;
+                } catch {
+                    status.textContent = 'Реклама недоступна или просмотр не завершён';
+                } finally {
+                    showingAd = false;
+                    render();
+                }
+            }
+            if (!pendingAd) return;
+            const saved = await sync((next, now) => {
+                if (next.passiveHoursGranted >= 12) return false;
+                if (!next.passiveHoursGranted) {
+                    next.passiveStartedAt = now;
+                    next.passiveLastRewardAt = now;
+                    next.passiveEndAt = now;
+                }
+                next.passiveHoursGranted++;
+                next.passiveEndAt += hour;
+                return true;
+            }, 'Добавлен час фарма');
+            if (saved) pendingAd = false;
+            render();
+        };
+
+        window.launchGame = url => {
+            if (syncing && pendingTaps) return;
+            const target = new URL(url);
+            if (userId && target.pathname === '/subway-runner-3d/') target.searchParams.set('uid', String(userId));
+            target.searchParams.set('returnUrl', location.origin + location.pathname);
+            const navigate = () => {
+                if (telegram?.initData && telegram.openLink) telegram.openLink(target.href);
+                else location.assign(target.href);
+            };
+            if (pendingTaps) void sync().then(saved => { if (saved) navigate(); });
+            else navigate();
+        };
+
+        window.switchTab = (name, button) => {
+            document.querySelectorAll('.tab-content').forEach(tab =>
+                tab.classList.toggle('active', tab.id === 'tab-' + name));
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item === button);
+                item.setAttribute('aria-pressed', String(item === button));
+            });
+        };
+
+        async function boot() {
+            if (!userId) {
+                status.textContent = 'Для сохранения в браузере разрешите локальное хранилище';
                 return;
             }
-
-            await saveUserData();
-            updateUI();
-        };
-
-        window.launchGame = function(url) {
-            const gameUrl = new URL(url);
-            gameUrl.searchParams.set('uid', String(userId));
-            gameUrl.searchParams.set('returnUrl', window.location.href);
-
-            if (tg && typeof tg.openLink === 'function') {
-                tg.openLink(gameUrl.href);
-            } else {
-                window.location.href = gameUrl.href;
+            if (booting || userRef) return;
+            booting = true;
+            try {
+                const [{ initializeApp }, firestore] = await Promise.all([
+                    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
+                    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+                ]);
+                ({ doc, runTransaction } = firestore);
+                db = firestore.getFirestore(initializeApp(firebaseConfig));
+                userRef = doc(db, 'users', String(userId));
+                await sync();
+            } catch {
+                status.textContent = 'Сервис сохранения недоступен. Обновите страницу.';
+            } finally {
+                booting = false;
             }
-        };
+        }
 
-        window.switchTab = function(tabName, element) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-
-            document.getElementById(`tab-${tabName}`).classList.add('active');
-            element.classList.add('active');
-        };
-
-        window.addEventListener('focus', loadUserData);
-
-        loadUserData();
+        window.addEventListener('focus', () => { if (userRef) void sync(); else void boot(); });
+        window.addEventListener('online', () => { if (userRef) void sync(); else void boot(); });
+        document.addEventListener('visibilitychange', () => { if (!document.hidden || pendingTaps) void sync(); });
+        setInterval(render, 1000);
+        setInterval(() => {
+            const passiveDue = state.passiveHoursGranted > state.passiveHoursPaid &&
+                Math.min(Date.now(), state.passiveEndAt) - state.passiveLastRewardAt >= hour;
+            if (pendingTaps || passiveDue || lastSyncFailed) void sync();
+        }, 3000);
+        render();
+        void boot();
     </script>
 </body>
 </html>
