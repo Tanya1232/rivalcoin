@@ -92,3 +92,5 @@ nav button[aria-pressed=true] { background: #36224f; color: #f5dcff; font-weight
 .game-link.life {color:#eff9ed;text-decoration:none;background:linear-gradient(125deg,#15382e,#345c44 72%,#687c48)}
 
 .game-link.jump {color:#fff0dc;text-decoration:none;background:linear-gradient(125deg,#222c56,#5f3e81 72%,#ab6477)}
+
+.game-link.sunset { color:#fff0dc; text-decoration:none; background:linear-gradient(125deg,#46312d,#885040 72%,#d58b55); }

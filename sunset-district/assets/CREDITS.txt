@@ -1,0 +1,29 @@
+SUNSET DISTRICT — ASSET CREDITS
+
+The following model and texture sources use Creative Commons CC0 1.0 Universal.
+License: https://creativecommons.org/publicdomain/zero/1.0/
+
+KENNEY
+https://kenney.nl/assets/animated-characters-protagonists
+Player: characterMedium with skaterMaleA skin. Idle, jump and run were converted
+from the original FBX files. The walk adapts the run timing and stride. The aim
+and shoot clips are original poses on the same rig. Model, texture and clips
+are packaged in player.glb.
+
+https://kenney.nl/assets/car-kit
+Sports sedan and crate. Original sedan-sports and box models, packaged with
+their original texture atlases embedded.
+
+https://kenney.nl/assets/city-kit-roads
+Construction barrier with its original texture atlas embedded.
+
+Original Kenney archives were obtained through the Ludots CC0 archive.
+https://github.com/MightyBubble/Ludots-Assets
+
+POLY HAVEN
+https://polyhaven.com/a/asphalt_04
+https://polyhaven.com/a/concrete_floor_02
+https://polyhaven.com/a/aerial_grass_rock
+Ground materials use the 1K diffuse color, OpenGL normal and packed
+ambient occlusion / roughness / metallic images from each asset.
+https://polyhaven.com/license
