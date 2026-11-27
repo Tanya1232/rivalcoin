@@ -42,7 +42,7 @@ function accountId() {
 const uid = accountId();
 const referral = /^(?:r_)?(\d{1,20})$/.exec(String(tg?.initDataUnsafe?.start_param ||
   new URLSearchParams(location.search).get('tgWebAppStartParam') || ''))?.[1];
-const inviteUrl = /^\d{1,20}$/.test(uid ?? '') ? 'https://t.me/RivalCoin_bot?startapp=r_' + uid : '';
+const inviteUrl = /^\d{1,20}$/.test(uid ?? '') ? 'https://t.me/RivalCoin_bot/rivalcoin?startapp=r_' + uid : '';
 const prefix = 'rival_outbox_' + uid + '_';
 const queuedInMemory = new Map();
 const defaults = {
