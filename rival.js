@@ -76,7 +76,7 @@ function listOperations(now = Date.now()) {
   } catch { /* In-memory outbox remains available. */ }
   return [...found.values()].filter(item =>
     /^[-a-f\d]{36}$/.test(item.id) && item.at >= now - RETENTION &&
-    ['tap','farm'].includes(item.type) && Number.isSafeInteger(item.count) && item.count > 0);
+    ['tap','farm','energy'].includes(item.type) && Number.isSafeInteger(item.count) && item.count > 0);
 }
 
 function acknowledge(item) {
@@ -151,6 +151,7 @@ async function sync(action, message) {
       for (const item of queue) {
         const delta = Math.max(0,item.count - (receipts[item.id]?.count || 0));
         if (item.type === 'farm' && delta && !addFarmHour(next,now)) continue;
+        if (item.type === 'energy' && delta) next.energy = Math.min(next.maxEnergy, next.energy + 250);
         if (item.type === 'tap' && delta) {
           const taps = Math.min(delta,Math.floor(next.energy / next.tapValue));
           const earned = taps * next.tapValue;
@@ -247,7 +248,8 @@ function render() {
   const minutes = Math.max(0,Math.ceil((view.passiveEndAt - now) / 60000));
   $('farm-status').textContent = minutes ? view.passiveHoursGranted + ' / 12 ч · осталось ' +
     Math.floor(minutes / 60) + ' ч ' + minutes % 60 + ' мин' : '1 час за видео · 100 RIVAL за полный час';
-  const waitingAd = queue.some(item => item.type === 'farm');
+  const waitingAd = queue.some(item => item.type !== 'tap');
+  $('energy-ad').disabled = busy || adBusy || waitingAd || energy >= view.maxEnergy;
   $('farm-ad').disabled = busy || adBusy || waitingAd || view.passiveHoursGranted >= 12;
   $('farm-ad').textContent = adBusy ? 'Открываем видео…' : waitingAd ? 'Видео учтено · сохраняем'
     : view.passiveHoursGranted >= 12 ? 'Достигнут лимит 12 часов' : 'Видео · +1 час фарма';
@@ -316,23 +318,27 @@ $('claim-mission').addEventListener('click',() => {
     return true;
   },'За миссию начислено 300 RIVAL.');
 });
-$('farm-ad').addEventListener('click',async () => {
-  if ($('farm-ad').disabled) return;
+async function watchReward(type, button) {
+  if (adBusy || button.disabled) return;
   adBusy = true;
   render();
   try {
     ads ??= window.Adsgram.init({ blockId: '59640' });
     const result = await ads.show();
     if (!result?.done || result.error) throw Error('Incomplete ad');
-    enqueue({ id: crypto.randomUUID(), type: 'farm', count: 1, at: Date.now() });
-    void sync(undefined,'Добавлен час фарма.');
+    enqueue({ id: crypto.randomUUID(), type, count: 1, at: Date.now() });
+    void sync(undefined, type === 'energy' ? 'Энергия восстановлена.' : 'Добавлен час фарма.');
   } catch {
     notice = 'Видео сейчас недоступно или просмотр прерван.';
   } finally {
     adBusy = false;
     render();
   }
-});
+}
+for (const type of ['farm', 'energy']) {
+  const button = $(type + '-ad');
+  button.addEventListener('click', () => watchReward(type, button));
+}
 
 $('referral-link').textContent = inviteUrl;
 if (inviteUrl) $('referral-link').href = inviteUrl;
@@ -414,7 +420,7 @@ setInterval(render,1000);
 setInterval(() => {
   const now = Date.now();
   const view = normalize(state,now);
-  const pending = listOperations(now).some(item => item.type === 'tap' || view.passiveHoursGranted < 12);
+  const pending = listOperations(now).some(item => item.type !== 'farm' || view.passiveHoursGranted < 12);
   if (pending || view.passiveHoursPaid !== state.passiveHoursPaid || view.passiveEndAt !== state.passiveEndAt || failed) refresh();
   else void reconcileRunner();
 },3500);
