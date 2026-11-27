@@ -323,7 +323,7 @@ async function watchReward(type, button) {
   adBusy = true;
   render();
   try {
-    ads ??= window.Adsgram.init({ blockId: '59640' });
+    ads ??= window.Adsgram.init({ blockId: '62304' });
     const result = await ads.show();
     if (!result?.done || result.error) throw Error('Incomplete ad');
     enqueue({ id: crypto.randomUUID(), type, count: 1, at: Date.now() });
